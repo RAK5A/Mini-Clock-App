@@ -1,4 +1,4 @@
-package com.sda5.clockapp.screens
+package com.sda5.clockapp.timer
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,13 +9,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun AlarmScreen(modifier: Modifier = Modifier) {
+fun TimerScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Alarm screen",
+            text = "Timer screen",
             style = MaterialTheme.typography.headlineSmall
         )
     }

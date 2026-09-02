@@ -17,10 +17,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sda5.clockapp.navigation.ClockDestination
-import com.sda5.clockapp.screens.AlarmScreen
-import com.sda5.clockapp.screens.StopwatchScreen
-import com.sda5.clockapp.screens.TimerScreen
-import com.sda5.clockapp.screens.WorldClockScreen
+import com.sda5.clockapp.alarm.AlarmScreen
+import com.sda5.clockapp.stopwatch.StopwatchScreen
+import com.sda5.clockapp.timer.TimerScreen
+import com.sda5.clockapp.worldclock.WorldClockScreen
 
 @Composable
 fun ClockApp() {
