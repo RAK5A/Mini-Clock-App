@@ -60,8 +60,7 @@ fun ClockAppTheme(
     )
 }*/
 
-/* Light theme for the project */
-private val LightColors = lightColorScheme(
+private val DarkColors = darkColorScheme(
     primary = ClockPrimary,
     onPrimary = ClockOnPrimary,
     primaryContainer = ClockPrimaryContainer,
@@ -71,15 +70,22 @@ private val LightColors = lightColorScheme(
     background = ClockBackground,
     onBackground = ClockOnBackground,
     surface = ClockSurface,
-    onSurface = ClockOnSurface
+    onSurface = ClockOnSurface,
+    surfaceVariant = ClockChipBg,
+    onSurfaceVariant = ClockMutedText
 )
 
-// TODO(dark theme): add a DarkColors scheme + isSystemInDarkTheme() switch here later
 @Composable
-fun ClockAppTheme(content: @Composable () -> Unit) {
+fun ClockAppTheme(
+    darkTheme: Boolean = true, // Default to dark theme for dark clock aesthetic
+    content: @Composable () -> Unit
+) {
+    val colorScheme = DarkColors
+
     MaterialTheme(
-        colorScheme = LightColors,
+        colorScheme = colorScheme,
         typography = ClockTypography,
         content = content
     )
 }
+
