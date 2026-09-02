@@ -40,7 +40,7 @@ git checkout -b chea-reaksa
 ```bash
 git add .
 ```
-I recommend to add the files you did instead to prevent erorr:
+I recommend to add the files you did instead to prevent error but `git add .` should be fine too
 
 ```bash
 git add <modified files>
