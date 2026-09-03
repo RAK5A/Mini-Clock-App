@@ -40,7 +40,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,13 +47,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +63,8 @@ import com.sda5.clockapp.ui.theme.ClockChipBg
 import com.sda5.clockapp.ui.theme.ClockDisabledStartBg
 import com.sda5.clockapp.ui.theme.ClockDisabledStartText
 import com.sda5.clockapp.ui.theme.ClockMutedText
+import com.sda5.clockapp.ui.theme.ClockOnBackground
+import com.sda5.clockapp.ui.theme.ClockOnPrimary
 import com.sda5.clockapp.ui.theme.ClockPauseRed
 import com.sda5.clockapp.ui.theme.ClockPrimary
 
@@ -94,7 +91,7 @@ fun TimerScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.FormatListBulleted,
                                 contentDescription = "Toggle Live Banner",
-                                tint = Color.White
+                                tint = ClockOnBackground
                             )
                         }
                         IconButton(onClick = {
@@ -103,7 +100,7 @@ fun TimerScreen(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Add Preset",
-                                tint = Color.White
+                                tint = ClockOnBackground
                             )
                         }
                     }
@@ -111,7 +108,7 @@ fun TimerScreen(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More Options",
-                            tint = Color.White
+                            tint = ClockOnBackground
                         )
                     }
                 }
@@ -124,7 +121,6 @@ fun TimerScreen(
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Optional Floating Live Notification Card (Screenshot 4)
             AnimatedVisibility(
                 visible = (uiState.status == TimerStatus.RUNNING || uiState.status == TimerStatus.PAUSED) && uiState.showLiveNotification,
                 enter = fadeIn(),
@@ -147,7 +143,6 @@ fun TimerScreen(
 
             when (uiState.status) {
                 TimerStatus.SETUP -> {
-                    // SETUP VIEW (Screenshots 1 & 2)
                     TimeWheelPicker(
                         hours = uiState.hours,
                         minutes = uiState.minutes,
@@ -160,7 +155,6 @@ fun TimerScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Presets quick time row
                     PresetsRow(
                         presets = uiState.presets,
                         onSelectPreset = { viewModel.applyPreset(it) },
@@ -173,7 +167,6 @@ fun TimerScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Bottom Start Button
                     StartButton(
                         isEnabled = uiState.isStartEnabled,
                         onClick = { viewModel.startTimer() },
@@ -182,20 +175,17 @@ fun TimerScreen(
                 }
 
                 TimerStatus.RUNNING, TimerStatus.PAUSED, TimerStatus.FINISHED -> {
-                    // COUNTDOWN VIEW (Screenshot 3)
                     ActiveCountdownView(
                         uiState = uiState,
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Control Buttons (Delete & Pause/Resume/Restart)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp, vertical = 32.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        // Delete / Cancel Pill Button
                         Button(
                             onClick = { viewModel.deleteTimer() },
                             modifier = Modifier
@@ -204,8 +194,8 @@ fun TimerScreen(
                                 .padding(end = 8.dp),
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2C2C2E),
-                                contentColor = Color.White
+                                containerColor = ClockChipBg,
+                                contentColor = ClockOnPrimary
                             )
                         ) {
                             Text(
@@ -215,7 +205,6 @@ fun TimerScreen(
                             )
                         }
 
-                        // Pause / Resume / Stop Pill Button
                         val buttonBgColor = when (uiState.status) {
                             TimerStatus.FINISHED -> ClockPrimary
                             TimerStatus.RUNNING -> ClockPauseRed
@@ -244,7 +233,7 @@ fun TimerScreen(
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = buttonBgColor,
-                                contentColor = Color.White
+                                contentColor = ClockOnPrimary
                             )
                         ) {
                             Text(
@@ -297,7 +286,7 @@ private fun PresetsRow(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Save Preset",
-                        tint = Color.White,
+                        tint = ClockOnPrimary,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -326,7 +315,7 @@ private fun PresetChip(
     ) {
         Text(
             text = preset.formattedString,
-            color = Color.White,
+            color = ClockOnPrimary,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium
         )
@@ -348,7 +337,7 @@ private fun StartButton(
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = ClockPrimary,
-            contentColor = Color.White,
+            contentColor = ClockOnPrimary,
             disabledContainerColor = ClockDisabledStartBg,
             disabledContentColor = ClockDisabledStartText
         )
@@ -372,7 +361,6 @@ private fun ActiveCountdownView(
         label = "RingProgress"
     )
 
-    // Pulsing effect for finished alarm state
     val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -388,20 +376,17 @@ private fun ActiveCountdownView(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        // Animated Circular Canvas Ring
         Canvas(modifier = Modifier.size(310.dp)) {
             val strokeWidth = 12.dp.toPx()
             val diameter = size.minDimension - strokeWidth
             val radius = diameter / 2f
 
-            // Dark background ring
             drawCircle(
-                color = Color(0xFF2C2C2E),
+                color = ClockChipBg,
                 radius = radius,
                 style = Stroke(width = strokeWidth)
             )
 
-            // Dynamic progress arc
             val sweepAngle = 360f * (if (uiState.status == TimerStatus.FINISHED) 1f else animatedFraction)
             val ringColor = if (uiState.status == TimerStatus.FINISHED) {
                 ClockPrimary.copy(alpha = pulseAlpha)
@@ -418,12 +403,10 @@ private fun ActiveCountdownView(
             )
         }
 
-        // Inside Circle Details
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Total Duration Header (e.g. "3 m")
             Text(
                 text = uiState.totalDurationDisplay,
                 color = ClockMutedText,
@@ -432,10 +415,9 @@ private fun ActiveCountdownView(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Large Time Remaining Display (e.g. "2:59" or "4 s")
             Text(
                 text = if (uiState.status == TimerStatus.FINISHED) "00:00" else uiState.remainingDisplay,
-                color = Color.White,
+                color = ClockOnBackground,
                 fontSize = 64.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
@@ -443,7 +425,6 @@ private fun ActiveCountdownView(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Target Finish Time with Bell Icon (e.g. "🔔 6:30 PM")
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center

@@ -20,13 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sda5.clockapp.ui.theme.ClockMutedText
+import com.sda5.clockapp.ui.theme.ClockOnBackground
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
@@ -60,7 +60,7 @@ fun TimeWheelPicker(
             text = ":",
             fontSize = 44.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = ClockOnBackground,
             modifier = Modifier.padding(top = 28.dp, start = 4.dp, end = 4.dp)
         )
 
@@ -77,7 +77,7 @@ fun TimeWheelPicker(
             text = ":",
             fontSize = 44.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = ClockOnBackground,
             modifier = Modifier.padding(top = 28.dp, start = 4.dp, end = 4.dp)
         )
 
@@ -105,18 +105,21 @@ private fun WheelColumn(
     val items = remember(range) { range.toList() }
     val itemCount = items.size
 
-    val initialIndex = remember(value, itemCount) {
+    val targetIndex = remember(value, itemCount) {
         val middleLoop = 1000 * itemCount
         middleLoop + (value - range.first)
     }
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (initialIndex - 1).coerceAtLeast(0))
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = (targetIndex - 1).coerceAtLeast(0)
+    )
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     val selectedIndex by remember {
         derivedStateOf {
             val firstVisibleIndex = listState.firstVisibleItemIndex
             val offset = listState.firstVisibleItemScrollOffset
+
             if (offset > itemHeight.value / 2) {
                 (firstVisibleIndex + 2) % itemCount
             } else {
@@ -137,8 +140,8 @@ private fun WheelColumn(
     LaunchedEffect(value) {
         val currentMappedVal = range.first + selectedIndex
         if (currentMappedVal != value) {
-            val targetIndex = 1000 * itemCount + (value - range.first)
-            listState.scrollToItem((targetIndex - 1).coerceAtLeast(0))
+            val newTargetIndex = 1000 * itemCount + (value - range.first)
+            listState.scrollToItem((newTargetIndex - 1).coerceAtLeast(0))
         }
     }
 
@@ -181,7 +184,7 @@ private fun WheelColumn(
                             text = String.format(Locale.getDefault(), "%02d", itemValue),
                             fontSize = if (isSelected) 46.sp else 36.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else ClockMutedText.copy(alpha = 0.35f),
+                            color = if (isSelected) ClockOnBackground else ClockMutedText.copy(alpha = 0.5f),
                             textAlign = TextAlign.Center
                         )
                     }
