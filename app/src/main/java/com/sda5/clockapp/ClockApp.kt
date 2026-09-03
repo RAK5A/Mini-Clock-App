@@ -1,5 +1,9 @@
 package com.sda5.clockapp
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -7,8 +11,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -24,6 +30,7 @@ import com.sda5.clockapp.alarm.AlarmEditScreen
 import com.sda5.clockapp.navigation.ClockDestination
 import com.sda5.clockapp.alarm.AlarmScreen
 import com.sda5.clockapp.alarm.AlarmViewModel
+import com.sda5.clockapp.alarm.AlarmViewModelFactory
 import com.sda5.clockapp.stopwatch.StopwatchScreen
 import com.sda5.clockapp.timer.TimerScreen
 import com.sda5.clockapp.worldclock.WorldClockScreen
@@ -33,19 +40,26 @@ private const val ALARM_EDIT_ROUTE = "alarm_edit?alarmId={alarmId}"
 @Composable
 fun ClockApp() {
     val navController = rememberNavController()
-    val alarmViewModel: AlarmViewModel = viewModel()
+    val application = LocalContext.current.applicationContext as ClockApplication
+    val alarmViewModel: AlarmViewModel = viewModel(factory = AlarmViewModelFactory(application))
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* alarms still schedule either way — this only affects the ringing notification's visibility */ }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
-    val showBottomBar = currentRoute != ALARM_EDIT_ROUTE
+    val showBottomBar = backStackEntry?.destination?.route != ALARM_EDIT_ROUTE
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                ClockBottomNavBar(
-                    navController = navController,
-                    currentDestination = backStackEntry?.destination
-                )
+                ClockBottomNavBar(navController, backStackEntry?.destination)
             }
         }
     ) { innerPadding ->
@@ -67,12 +81,7 @@ fun ClockApp() {
 
             composable(
                 route = ALARM_EDIT_ROUTE,
-                arguments = listOf(
-                    navArgument("alarmId") {
-                        type = NavType.LongType
-                        defaultValue = -1L
-                    }
-                )
+                arguments = listOf(navArgument("alarmId") { type = NavType.LongType; defaultValue = -1L })
             ) { backStack ->
                 val alarmId = backStack.arguments?.getLong("alarmId") ?: -1L
                 AlarmEditScreen(
@@ -86,21 +95,15 @@ fun ClockApp() {
 }
 
 @Composable
-private fun ClockBottomNavBar(
-    navController: NavHostController,
-    currentDestination: NavDestination?
-) {
+private fun ClockBottomNavBar(navController: NavHostController, currentDestination: NavDestination?) {
     NavigationBar {
         ClockDestination.items.forEach { destination ->
             val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-
             NavigationBarItem(
                 selected = selected,
                 onClick = {
                     navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }

@@ -29,7 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sda5.clockapp.model.Alarm
+import com.sda5.clockapp.data.model.Alarm
 import java.time.DayOfWeek
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,7 +119,7 @@ fun AlarmEditScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        /*Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
 
         SettingsToggleRow(
@@ -136,7 +136,7 @@ fun AlarmEditScreen(
             checked = vibrationEnabled,
             onCheckedChange = { vibrationEnabled = it }
         )
-        HorizontalDivider()*/
+        HorizontalDivider()
 
         SettingsToggleRow(
             title = "Snooze",

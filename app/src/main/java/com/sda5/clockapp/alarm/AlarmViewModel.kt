@@ -1,42 +1,55 @@
 package com.sda5.clockapp.alarm
 
 import androidx.lifecycle.ViewModel
-import com.sda5.clockapp.model.Alarm
+import androidx.lifecycle.viewModelScope
+import com.sda5.clockapp.data.alarms.AlarmDao
+import com.sda5.clockapp.data.model.Alarm
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
-class AlarmViewModel : ViewModel() {
-
-    private val _alarms = MutableStateFlow<List<Alarm>>(emptyList())
-    val alarms: StateFlow<List<Alarm>> = _alarms.asStateFlow()
+class AlarmViewModel(
+    private val dao: AlarmDao,
+    private val scheduler: AlarmScheduler
+) : ViewModel() {
+    val alarms: StateFlow<List<Alarm>> = dao.getAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
-    fun addAlarm(alarm: Alarm) {
-        _alarms.value = _alarms.value + alarm
+    fun addAlarm(alarm: Alarm) = viewModelScope.launch {
+        dao.upsert(alarm)
+        scheduler.schedule(alarm)
         announce(alarm)
     }
 
-    fun updateAlarm(alarm: Alarm) {
-        _alarms.value = _alarms.value.map { if (it.id == alarm.id) alarm else it }
+    fun updateAlarm(alarm: Alarm) = viewModelScope.launch {
+        dao.upsert(alarm)
+        if (alarm.isEnabled) scheduler.schedule(alarm) else scheduler.cancel(alarm)
         announce(alarm)
     }
 
-    fun deleteAlarm(id: Long) {
-        _alarms.value = _alarms.value.filterNot { it.id == id }
+    fun deleteAlarm(id: Long) = viewModelScope.launch {
+        val alarm = alarms.value.find { it.id == id } ?: return@launch
+        scheduler.cancel(alarm)
+        dao.delete(alarm)
     }
 
-    fun deleteAllAlarms() {
-        _alarms.value = emptyList()
+    fun deleteAllAlarms() = viewModelScope.launch {
+        alarms.value.forEach { scheduler.cancel(it) }
+        dao.deleteAll()
     }
 
-    fun setEnabled(id: Long, enabled: Boolean) {
-        _alarms.value = _alarms.value.map {
-            if (it.id == id) it.copy(isEnabled = enabled) else it
-        }
+    fun setEnabled(id: Long, enabled: Boolean) = viewModelScope.launch {
+        val alarm = alarms.value.find { it.id == id } ?: return@launch
+        val updated = alarm.copy(isEnabled = enabled)
+        dao.upsert(updated)
+        if (enabled) scheduler.schedule(updated) else scheduler.cancel(updated)
     }
 
     fun consumeSnackbarMessage() {
