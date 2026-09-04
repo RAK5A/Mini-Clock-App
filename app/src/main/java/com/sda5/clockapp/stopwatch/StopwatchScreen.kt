@@ -1,4 +1,4 @@
-package com.sda5.clockapp.screens
+package com.sda5.clockapp.stopwatch
 
 import android.os.SystemClock
 import androidx.compose.foundation.background
