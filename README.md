@@ -9,7 +9,7 @@ git clone https://github.com/RAK5A/Mini-Clock-App.git
 ```
 
 ```bash
-cd Mini-Clock-App
+cd Mini-Clock-App2
 ```
 
 **2. Open the folder in Android Studio and let Gradle sync.**
