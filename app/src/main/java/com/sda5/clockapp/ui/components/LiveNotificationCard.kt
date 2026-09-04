@@ -1,6 +1,7 @@
 package com.sda5.clockapp.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,9 @@ import androidx.compose.ui.unit.sp
 import com.sda5.clockapp.ui.theme.ClockLiveIconBg
 import com.sda5.clockapp.ui.theme.ClockLiveNotificationBg
 import com.sda5.clockapp.ui.theme.ClockMutedText
+import com.sda5.clockapp.ui.theme.ClockPrimary
+import com.sda5.clockapp.ui.theme.GlassBorder
+import com.sda5.clockapp.ui.theme.TimerGradientBrush
 
 @Composable
 fun LiveNotificationCard(
@@ -58,24 +63,25 @@ fun LiveNotificationCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(32.dp))
+                .clip(RoundedCornerShape(24.dp))
                 .background(ClockLiveNotificationBg)
+                .border(1.dp, GlassBorder, RoundedCornerShape(24.dp))
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Hourglass Icon Badge
+            // Hourglass Icon Badge with Gradient
             Box(
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(ClockLiveIconBg),
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(TimerGradientBrush),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.HourglassBottom,
                     contentDescription = "Timer",
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
 
@@ -89,15 +95,15 @@ fun LiveNotificationCard(
                 Text(
                     text = remainingDisplay,
                     color = Color.White,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
                 
                 Text(
                     text = "$totalDisplay / $targetFinishTime",
-                    color = ClockMutedText.copy(alpha = 0.9f),
-                    fontSize = 14.sp,
+                    color = ClockMutedText,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -105,14 +111,14 @@ fun LiveNotificationCard(
             // Right Controls (X and || / >)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 IconButton(onClick = onClose) {
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Close Notification",
-                        tint = Color.White.copy(alpha = 0.8f),
-                        modifier = Modifier.size(24.dp)
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
@@ -128,3 +134,4 @@ fun LiveNotificationCard(
         }
     }
 }
+
