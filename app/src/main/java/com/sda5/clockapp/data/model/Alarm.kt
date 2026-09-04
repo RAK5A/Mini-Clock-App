@@ -12,6 +12,7 @@ data class Alarm(
     val label: String = "",
     val repeatDays: Set<DayOfWeek> = emptySet(), // empty = one-time alarm
     val soundEnabled: Boolean = true,
+    val soundUri: String? = null, // null = use the system default alarm sound
     val vibrationEnabled: Boolean = true,
     val snoozeEnabled: Boolean = true,
     val isEnabled: Boolean = true,
