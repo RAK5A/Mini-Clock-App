@@ -3,7 +3,6 @@ package com.sda5.clockapp.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationManagerCompat
 import com.sda5.clockapp.ClockApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +14,9 @@ class AlarmActionReceiver : BroadcastReceiver() {
         val alarmId = intent.getLongExtra(AlarmReceiver.EXTRA_ALARM_ID, -1L)
         if (alarmId == -1L) return
 
-        NotificationManagerCompat.from(context).cancel(alarmId.hashCode())
+        // Stopping the service tears down the media player, vibration, and
+        // the notification together — no separate cancel() call needed.
+        context.stopService(Intent(context, AlarmRingingService::class.java))
 
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {

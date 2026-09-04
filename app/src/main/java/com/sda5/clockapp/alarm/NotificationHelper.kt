@@ -1,24 +1,19 @@
 package com.sda5.clockapp.alarm
 
-import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.media.AudioAttributes
-import android.provider.Settings
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import com.sda5.clockapp.data.model.Alarm
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 object NotificationHelper {
-    const val CHANNEL_ID = "alarm_channel"
+    const val CHANNEL_ID = "alarm_channel_v2"
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService<NotificationManager>() ?: return
@@ -30,19 +25,16 @@ object NotificationHelper {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Alarm ringing notifications"
-            setSound(
-                Settings.System.DEFAULT_ALARM_ALERT_URI,
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            enableVibration(true)
+            // Sound and vibration are handled manually by AlarmRingingService now,
+            // so each alarm can use its own ringtone — a channel's sound/vibration
+            // is fixed at creation and shared by every notification on it.
+            setSound(null, null)
+            enableVibration(false)
         }
         manager.createNotificationChannel(channel)
     }
 
-    fun showRingingNotification(context: Context, alarm: Alarm) {
+    fun buildRingingNotification(context: Context, alarm: Alarm): Notification {
         val requestCode = alarm.id.hashCode()
 
         val dismissIntent = Intent(context, AlarmActionReceiver::class.java).apply {
@@ -78,10 +70,6 @@ object NotificationHelper {
             builder.addAction(0, "Snooze", snoozePendingIntent)
         }
 
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            NotificationManagerCompat.from(context).notify(requestCode, builder.build())
-        }
+        return builder.build()
     }
 }
