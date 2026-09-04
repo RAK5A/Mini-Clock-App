@@ -37,14 +37,6 @@ val ClockPauseRed = Color(0xFFFF3B30)
 val ClockLiveNotificationBg = Color(0xFF171925)
 val ClockLiveIconBg = Color(0xFF635BFF)
 
-/* Feature Accents */
-val AlarmAccent = Color(0xFF8B5CF6)
-val AlarmAccentGradientEnd = Color(0xFFD946EF)
-val StopwatchAccent = Color(0xFF06B6D4)
-val StopwatchAccentGradientEnd = Color(0xFF3B82F6)
-val WorldClockAccent = Color(0xFFF59E0B)
-val WorldClockAccentGradientEnd = Color(0xFFEF4444)
-
 /* Glassmorphism Colors */
 val GlassSurface = Color(0x1AFFFFFF)
 val GlassBorder = Color(0x33FFFFFF)
@@ -54,13 +46,5 @@ val GlassHighlight = Color(0x1FFFFFFF)
 val TimerGradientBrush = Brush.linearGradient(
     colors = listOf(Color(0xFFFF5252), Color(0xFFFF7B00))
 )
-val AlarmGradientBrush = Brush.linearGradient(
-    colors = listOf(AlarmAccent, AlarmAccentGradientEnd)
-)
-val StopwatchGradientBrush = Brush.linearGradient(
-    colors = listOf(StopwatchAccent, StopwatchAccentGradientEnd)
-)
-val WorldClockGradientBrush = Brush.linearGradient(
-    colors = listOf(WorldClockAccent, WorldClockAccentGradientEnd)
-)
+
 

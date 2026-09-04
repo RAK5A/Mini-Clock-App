@@ -39,15 +39,11 @@ import com.sda5.clockapp.alarm.AlarmScreen
 import com.sda5.clockapp.navigation.ClockDestination
 import com.sda5.clockapp.stopwatch.StopwatchScreen
 import com.sda5.clockapp.timer.TimerScreen
-import com.sda5.clockapp.ui.theme.AlarmAccent
 import com.sda5.clockapp.ui.theme.ClockBackground
 import com.sda5.clockapp.ui.theme.ClockMutedText
 import com.sda5.clockapp.ui.theme.ClockPrimary
 import com.sda5.clockapp.ui.theme.ClockSurfaceElevated
 import com.sda5.clockapp.ui.theme.GlassBorder
-import com.sda5.clockapp.ui.theme.GlassSurface
-import com.sda5.clockapp.ui.theme.StopwatchAccent
-import com.sda5.clockapp.ui.theme.WorldClockAccent
 import com.sda5.clockapp.worldclock.WorldClockScreen
 
 @Composable
@@ -96,12 +92,7 @@ private fun ClockBottomNavBar(navController: NavHostController) {
             ClockDestination.items.forEach { destination ->
                 val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
 
-                val activeColor = when (destination) {
-                    ClockDestination.Alarm -> AlarmAccent
-                    ClockDestination.WorldClock -> WorldClockAccent
-                    ClockDestination.Stopwatch -> StopwatchAccent
-                    ClockDestination.Timer -> ClockPrimary
-                }
+                val activeColor = ClockPrimary
 
                 val iconColor by animateColorAsState(
                     targetValue = if (selected) activeColor else ClockMutedText,
