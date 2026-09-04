@@ -1,6 +1,10 @@
 package com.sda5.clockapp.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,13 +25,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sda5.clockapp.ui.theme.ClockBackground
 import com.sda5.clockapp.ui.theme.ClockMutedText
+import com.sda5.clockapp.ui.theme.GlassBorder
+import com.sda5.clockapp.ui.theme.GlassSurface
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
 
@@ -40,55 +51,73 @@ fun TimeWheelPicker(
     onSecondsChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        // Hours wheel
-        WheelColumn(
-            label = "Hours",
-            value = hours,
-            range = 0..99,
-            onValueChange = onHoursChange,
-            modifier = Modifier.weight(1f)
+        // Selection glass highlight pill in background
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .height(64.dp)
+                .padding(top = 18.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(GlassSurface)
+                .border(1.dp, GlassBorder, RoundedCornerShape(18.dp))
         )
 
-        Text(
-            text = ":",
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(top = 28.dp, start = 4.dp, end = 4.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Hours wheel
+            WheelColumn(
+                label = "Hours",
+                value = hours,
+                range = 0..99,
+                onValueChange = onHoursChange,
+                modifier = Modifier.weight(1f)
+            )
 
-        // Minutes wheel
-        WheelColumn(
-            label = "Minutes",
-            value = minutes,
-            range = 0..59,
-            onValueChange = onMinutesChange,
-            modifier = Modifier.weight(1f)
-        )
+            Text(
+                text = ":",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 28.dp)
+            )
 
-        Text(
-            text = ":",
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(top = 28.dp, start = 4.dp, end = 4.dp)
-        )
+            // Minutes wheel
+            WheelColumn(
+                label = "Minutes",
+                value = minutes,
+                range = 0..59,
+                onValueChange = onMinutesChange,
+                modifier = Modifier.weight(1f)
+            )
 
-        // Seconds wheel
-        WheelColumn(
-            label = "Seconds",
-            value = seconds,
-            range = 0..59,
-            onValueChange = onSecondsChange,
-            modifier = Modifier.weight(1f)
-        )
+            Text(
+                text = ":",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 28.dp)
+            )
+
+            // Seconds wheel
+            WheelColumn(
+                label = "Seconds",
+                value = seconds,
+                range = 0..59,
+                onValueChange = onSecondsChange,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -100,7 +129,7 @@ private fun WheelColumn(
     range: IntRange,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    itemHeight: Dp = 56.dp
+    itemHeight: Dp = 60.dp
 ) {
     val items = remember(range) { range.toList() }
     val itemCount = items.size
@@ -149,9 +178,10 @@ private fun WheelColumn(
         Text(
             text = label,
             color = ClockMutedText,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 12.dp)
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.8.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
 
         Box(
@@ -171,6 +201,12 @@ private fun WheelColumn(
                     val itemValue = items[actualIndex]
                     val isSelected = actualIndex == selectedIndex
 
+                    val fontSizeAnimated by animateFloatAsState(
+                        targetValue = if (isSelected) 44f else 32f,
+                        animationSpec = tween(150),
+                        label = "FontSize"
+                    )
+
                     Box(
                         modifier = Modifier
                             .height(itemHeight)
@@ -179,14 +215,39 @@ private fun WheelColumn(
                     ) {
                         Text(
                             text = String.format(Locale.getDefault(), "%02d", itemValue),
-                            fontSize = if (isSelected) 46.sp else 36.sp,
+                            fontSize = fontSizeAnimated.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else ClockMutedText.copy(alpha = 0.35f),
+                            color = if (isSelected) Color.White else ClockMutedText.copy(alpha = 0.3f),
                             textAlign = TextAlign.Center
                         )
                     }
                 }
             }
+
+            // Top and Bottom gradient fade masks
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(itemHeight * 0.8f)
+                    .align(Alignment.TopCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(ClockBackground, Color.Transparent)
+                        )
+                    )
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(itemHeight * 0.8f)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, ClockBackground)
+                        )
+                    )
+            )
         }
     }
 }
+
