@@ -2,8 +2,8 @@ package com.sda5.clockapp.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sda5.clockapp.model.Alarm
 import com.sda5.clockapp.data.alarms.AlarmDao
-import com.sda5.clockapp.data.model.Alarm
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
