@@ -41,3 +41,17 @@ fun ClockAppTheme(content: @Composable () -> Unit) {
         content = content
     )
 }
+
+//@Composable
+//fun ClockAppTheme(
+//    darkTheme: Boolean = true, // Default to dark theme for dark clock aesthetic
+//    content: @Composable () -> Unit
+//) {
+//    val colorScheme = DarkColors
+//
+//    MaterialTheme(
+//        colorScheme = colorScheme,
+//        typography = ClockTypography,
+//        content = content
+//    )
+//}
