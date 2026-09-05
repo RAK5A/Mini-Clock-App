@@ -11,11 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,12 +39,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sda5.clockapp.model.Alarm
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 @Composable
 fun AlarmScreen(
@@ -70,49 +77,44 @@ fun AlarmScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            if (nextEntry != null) {
-                val (hours, minutes) = countdownText(LocalDateTime.now(), nextEntry.second)
-                Text(
-                    text = "Alarm in $hours hours\n$minutes minutes",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = nextEntry.second.format(DateTimeFormatter.ofPattern("EEE, MMM d, h:mm a")),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                Text(
-                    text = "Alarm",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onAddAlarm) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add alarm")
+                if (nextEntry != null) {
+                    val (hours, minutes) = countdownText(LocalDateTime.now(), nextEntry.second)
+                    Text(
+                        text = "Next alarm in ${hours}h ${minutes}m",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        text = "No upcoming alarms",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
+
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "More options")
+                        Icon(
+                            Icons.Filled.Tune,
+                            contentDescription = "Options",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
@@ -129,6 +131,8 @@ fun AlarmScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             if (alarms.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -142,18 +146,39 @@ fun AlarmScreen(
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(alarms, key = { it.id }) { alarm ->
+                    itemsIndexed(alarms, key = { _, alarm -> alarm.id }) { index, alarm ->
                         AlarmCard(
                             alarm = alarm,
+                            index = index,
                             onClick = { onEditAlarm(alarm.id) },
                             onToggle = { enabled -> alarmViewModel.setEnabled(alarm.id, enabled) }
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onAddAlarm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+            ) {
+                Text("ADD", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -161,29 +186,39 @@ fun AlarmScreen(
 @Composable
 private fun AlarmCard(
     alarm: Alarm,
+    index: Int,
     onClick: () -> Unit,
     onToggle: (Boolean) -> Unit
 ) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
+                    text = "ALARM ${index + 1}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 1.5.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
                     text = LocalTime.of(alarm.hour, alarm.minute)
                         .format(DateTimeFormatter.ofPattern("h:mm a")),
-                    style = MaterialTheme.typography.headlineSmall
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (alarm.label.isNotBlank()) {
                     Text(
@@ -192,36 +227,40 @@ private fun AlarmCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = nextTrigger(alarm)?.format(DateTimeFormatter.ofPattern("EEE, MMM d")) ?: "",
+                    text = repeatSummary(alarm),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Switch(checked = alarm.isEnabled, onCheckedChange = onToggle)
             }
+
+            Switch(
+                checked = alarm.isEnabled,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                    checkedThumbColor = MaterialTheme.colorScheme.onSecondary
+                )
+            )
         }
     }
+}
+
+private fun repeatSummary(alarm: Alarm): String {
+    if (alarm.repeatDays.isEmpty()) return "One time"
+    if (alarm.repeatDays.size == 7) return "Every day"
+    return alarm.repeatDays
+        .sortedBy { it.value }
+        .joinToString(", ") { it.getDisplayName(TextStyle.SHORT, Locale.getDefault()) }
 }
 
 @Composable
 @Preview(showBackground = true)
 fun AlarmScreenPreview() {
     AlarmCard(
-        alarm = Alarm(
-            id = 2L,
-            hour = 14,
-            minute = 0,
-            label = "",
-            isEnabled = false
-        ),
+        alarm = Alarm(id = 2L, hour = 14, minute = 0, label = "", isEnabled = false),
+        index = 0,
         onClick = {}
     ) { }
-
-    /*AlarmScreen(
-        alarmViewModel = TODO(),
-        onAddAlarm = TODO()
-    ) { }*/
 }
