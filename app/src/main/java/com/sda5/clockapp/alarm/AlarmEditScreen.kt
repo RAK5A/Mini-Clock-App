@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -37,7 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.sda5.clockapp.data.model.Alarm
+import com.sda5.clockapp.model.Alarm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
@@ -69,6 +71,11 @@ fun AlarmEditScreen(
     var soundUri by rememberSaveable { mutableStateOf(existingAlarm?.soundUri) }
     var vibrationEnabled by rememberSaveable { mutableStateOf(existingAlarm?.vibrationEnabled ?: true) }
     var snoozeEnabled by rememberSaveable { mutableStateOf(existingAlarm?.snoozeEnabled ?: true) }
+    var snoozeIntervalMinutes by rememberSaveable { mutableStateOf(existingAlarm?.snoozeIntervalMinutes ?: 5) }
+    var snoozeRepeatLimit by rememberSaveable {
+        mutableStateOf<Int?>(if (existingAlarm != null) existingAlarm.snoozeRepeatLimit else 3)
+    }
+    var showSnoozeDialog by remember { mutableStateOf(false) }
 
     val soundTitle by produceState(initialValue = "Default alarm sound", soundUri) {
         value = withContext(Dispatchers.IO) {
@@ -76,6 +83,12 @@ fun AlarmEditScreen(
                 ?: RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM)
             uri?.let { RingtoneManager.getRingtone(context, it)?.getTitle(context) } ?: "Default alarm sound"
         }
+    }
+
+    val snoozeSubtitle = if (snoozeRepeatLimit == null) {
+        "$snoozeIntervalMinutes minutes, Forever"
+    } else {
+        "$snoozeIntervalMinutes minutes, $snoozeRepeatLimit times"
     }
 
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
@@ -97,6 +110,19 @@ fun AlarmEditScreen(
             putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, currentUri)
         }
         ringtonePickerLauncher.launch(intent)
+    }
+
+    if (showSnoozeDialog) {
+        SnoozeSettingsDialog(
+            currentInterval = snoozeIntervalMinutes,
+            currentRepeatLimit = snoozeRepeatLimit,
+            onConfirm = { interval, repeatLimit ->
+                snoozeIntervalMinutes = interval
+                snoozeRepeatLimit = repeatLimit
+                showSnoozeDialog = false
+            },
+            onDismiss = { showSnoozeDialog = false }
+        )
     }
 
     Column(
@@ -183,9 +209,10 @@ fun AlarmEditScreen(
 
         SettingsToggleRow(
             title = "Snooze",
-            subtitle = "5 minutes, 3 times",
+            subtitle = snoozeSubtitle,
             checked = snoozeEnabled,
-            onCheckedChange = { snoozeEnabled = it }
+            onCheckedChange = { snoozeEnabled = it },
+            onLabelClick = { showSnoozeDialog = true }
         )
         HorizontalDivider()
 
@@ -219,6 +246,8 @@ fun AlarmEditScreen(
                     soundUri = soundUri,
                     vibrationEnabled = vibrationEnabled,
                     snoozeEnabled = snoozeEnabled,
+                    snoozeIntervalMinutes = snoozeIntervalMinutes,
+                    snoozeRepeatLimit = snoozeRepeatLimit,
                     isEnabled = true
                 )
                 if (existingAlarm != null) {
@@ -234,6 +263,102 @@ fun AlarmEditScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SnoozeSettingsDialog(
+    currentInterval: Int,
+    currentRepeatLimit: Int?,
+    onConfirm: (interval: Int, repeatLimit: Int?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val intervalPresets = listOf(5, 10, 15, 20, 30)
+    var isCustomInterval by remember { mutableStateOf(currentInterval !in intervalPresets) }
+    var selectedInterval by remember { mutableStateOf(currentInterval) }
+    var customIntervalText by remember {
+        mutableStateOf(if (currentInterval !in intervalPresets) currentInterval.toString() else "")
+    }
+
+    val repeatPresets = listOf(3, 5)
+    var selectedRepeatLimit by remember { mutableStateOf(currentRepeatLimit) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Snooze") },
+        text = {
+            Column {
+                Text("Interval", style = MaterialTheme.typography.labelLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    intervalPresets.forEach { minutes ->
+                        FilterChip(
+                            selected = !isCustomInterval && selectedInterval == minutes,
+                            onClick = {
+                                isCustomInterval = false
+                                selectedInterval = minutes
+                            },
+                            label = { Text("${minutes}m") }
+                        )
+                    }
+                    FilterChip(
+                        selected = isCustomInterval,
+                        onClick = { isCustomInterval = true },
+                        label = { Text("Custom") }
+                    )
+                }
+                if (isCustomInterval) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = customIntervalText,
+                        onValueChange = { text -> customIntervalText = text.filter { it.isDigit() } },
+                        label = { Text("Minutes") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Repeat", style = MaterialTheme.typography.labelLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    repeatPresets.forEach { times ->
+                        FilterChip(
+                            selected = selectedRepeatLimit == times,
+                            onClick = { selectedRepeatLimit = times },
+                            label = { Text("$times") }
+                        )
+                    }
+                    FilterChip(
+                        selected = selectedRepeatLimit == null,
+                        onClick = { selectedRepeatLimit = null },
+                        label = { Text("Forever") }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val interval = if (isCustomInterval) {
+                    customIntervalText.toIntOrNull()?.coerceAtLeast(1) ?: currentInterval
+                } else {
+                    selectedInterval
+                }
+                onConfirm(interval, selectedRepeatLimit)
+            }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
 @Composable
 private fun SettingsToggleRow(
     title: String,
@@ -245,13 +370,12 @@ private fun SettingsToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .let { if (onLabelClick != null) it.clickable(onClick = onLabelClick) else it }
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = if (onLabelClick != null) Modifier.clickable(onClick = onLabelClick) else Modifier
-        ) {
+        Column {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(
                 text = subtitle,

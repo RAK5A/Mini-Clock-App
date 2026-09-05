@@ -13,9 +13,8 @@ class AlarmActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val alarmId = intent.getLongExtra(AlarmReceiver.EXTRA_ALARM_ID, -1L)
         if (alarmId == -1L) return
+        val snoozeCount = intent.getIntExtra(AlarmReceiver.EXTRA_SNOOZE_COUNT, 0)
 
-        // Stopping the service tears down the media player, vibration, and
-        // the notification together — no separate cancel() call needed.
         context.stopService(Intent(context, AlarmRingingService::class.java))
 
         val pendingResult = goAsync()
@@ -25,7 +24,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
                 val alarm = app.database.alarmDao().getById(alarmId) ?: return@launch
 
                 if (intent.action == ACTION_SNOOZE) {
-                    app.alarmScheduler.scheduleSnooze(alarm)
+                    app.alarmScheduler.scheduleSnooze(alarm, snoozeCount + 1)
                 }
             } finally {
                 pendingResult.finish()

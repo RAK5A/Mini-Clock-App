@@ -14,6 +14,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1L)
         if (alarmId == -1L) return
+        val snoozeCount = intent.getIntExtra(EXTRA_SNOOZE_COUNT, 0)
 
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
@@ -30,11 +31,17 @@ class AlarmReceiver : BroadcastReceiver() {
                     putExtra(AlarmRingingService.EXTRA_SOUND_URI, alarm.soundUri)
                     putExtra(AlarmRingingService.EXTRA_VIBRATION_ENABLED, alarm.vibrationEnabled)
                     putExtra(AlarmRingingService.EXTRA_SNOOZE_ENABLED, alarm.snoozeEnabled)
+                    putExtra(AlarmRingingService.EXTRA_SNOOZE_INTERVAL_MINUTES, alarm.snoozeIntervalMinutes)
+                    putExtra(
+                        AlarmRingingService.EXTRA_SNOOZE_REPEAT_LIMIT,
+                        alarm.snoozeRepeatLimit ?: AlarmRingingService.NO_LIMIT
+                    )
+                    putExtra(AlarmRingingService.EXTRA_SNOOZE_COUNT, snoozeCount)
                 }
                 ContextCompat.startForegroundService(context, ringIntent)
 
                 if (alarm.repeatDays.isNotEmpty()) {
-                    app.alarmScheduler.schedule(alarm)
+                    app.alarmScheduler.schedule(alarm) // fresh occurrence — snooze count resets
                 } else {
                     app.database.alarmDao().upsert(alarm.copy(isEnabled = false))
                 }
@@ -46,5 +53,6 @@ class AlarmReceiver : BroadcastReceiver() {
 
     companion object {
         const val EXTRA_ALARM_ID = "extra_alarm_id"
+        const val EXTRA_SNOOZE_COUNT = "extra_snooze_count"
     }
 }
