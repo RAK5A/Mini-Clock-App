@@ -1,42 +1,45 @@
 package com.sda5.clockapp.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 
-/* Light theme for the project */
 private val LightColors = lightColorScheme(
-    primary = ClockPrimary,
-    onPrimary = ClockOnPrimary,
-    primaryContainer = ClockPrimaryContainer,
-    background = ClockBackground,
-    onBackground = ClockOnBackground,
-    surface = ClockSurface,
-    onSurface = ClockOnSurface
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurface,
+    onSurfaceVariant = LightOnSurfaceVariant
 )
 
 private val DarkColors = darkColorScheme(
-    primary = ClockPrimary,
-    onPrimary = ClockOnPrimary,
-    primaryContainer = ClockPrimaryContainer,
-    onPrimaryContainer = ClockOnPrimaryContainer,
-    secondary = ClockSecondary,
-    onSecondary = ClockOnSecondary,
-    background = ClockBackground,
-    onBackground = ClockOnBackground,
-    surface = ClockSurface,
-    onSurface = ClockOnSurface,
-    surfaceVariant = ClockChipBg,
-    onSurfaceVariant = ClockMutedText
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    background = DarkBackground,
+    onBackground = DarkOnSurface,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurface,
+    onSurfaceVariant = DarkOnSurfaceVariant
 )
+
 
 // TODO(dark theme): add a DarkColors scheme + isSystemInDarkTheme() switch here later
 @Composable
 fun ClockAppTheme(content: @Composable () -> Unit) {
+    val colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors
     MaterialTheme(
-        colorScheme = LightColors,
+        colorScheme = colorScheme,
         typography = ClockTypography,
         content = content
     )
