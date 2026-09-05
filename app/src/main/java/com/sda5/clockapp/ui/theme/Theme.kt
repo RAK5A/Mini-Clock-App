@@ -6,7 +6,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-
 private val LightColors = lightColorScheme(
     primary = LightPrimary,
     onPrimary = LightOnPrimary,
@@ -33,8 +32,6 @@ private val DarkColors = darkColorScheme(
     onSurfaceVariant = DarkOnSurfaceVariant
 )
 
-
-// TODO(dark theme): add a DarkColors scheme + isSystemInDarkTheme() switch here later
 @Composable
 fun ClockAppTheme(content: @Composable () -> Unit) {
     val colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors

@@ -2,20 +2,6 @@ package com.sda5.clockapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-/* Theme for the project */
-val ClockPrimary = Color(0xFF3A5A98)
-val ClockOnPrimary = Color(0xFFFFFFFF)
-val ClockPrimaryContainer = Color(0xFFD8E2FF)
-val ClockOnPrimaryContainer = Color(0xFF001A41)
-
-val ClockSecondary = Color(0xFF5A5D72)
-val ClockOnSecondary = Color(0xFFFFFFFF)
-
-val ClockBackground = Color(0xFFFFFFFF)
-val ClockOnBackground = Color(0xFF1A1B1F)
-val ClockSurface = Color(0xFFFFFFFF)
-val ClockOnSurface = Color(0xFF1A1B1F)
-
 // Light palette
 val LightBackground = Color(0xFFF4F2FA)
 val LightSurface = Color(0xFFFFFFFF)
