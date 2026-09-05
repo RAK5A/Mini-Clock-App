@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -108,25 +110,37 @@ fun AlarmScreen(
                     )
                 }
 
-                Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onAddAlarm) {
                         Icon(
-                            Icons.Filled.Tune,
-                            contentDescription = "Options",
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Add Alarm",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Delete all alarms") },
-                            onClick = {
-                                menuExpanded = false
-                                alarmViewModel.deleteAllAlarms()
-                            }
-                        )
+
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = "Options",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete all alarms") },
+                                onClick = {
+                                    menuExpanded = false
+                                    alarmViewModel.deleteAllAlarms()
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -159,23 +173,6 @@ fun AlarmScreen(
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = onAddAlarm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
-            ) {
-                Text("ADD", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
