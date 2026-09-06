@@ -1,16 +1,15 @@
 package com.sda5.clockapp.timer
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Intent
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 data class PresetTime(
@@ -97,11 +96,26 @@ data class TimerUiState(
         }
 }
 
-class TimerViewModel : ViewModel() {
+class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(TimerUiState())
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
-    private var timerJob: Job? = null
+    init {
+        // TimerService owns the running countdown so it survives the app closing —
+        // this just mirrors whatever it reports into our own state for the UI.
+        viewModelScope.launch {
+            TimerState.uiState.collect { runState ->
+                _uiState.update {
+                    it.copy(
+                        status = runState.status,
+                        totalSeconds = runState.totalSeconds,
+                        remainingMillis = runState.remainingMillis,
+                        targetFinishTime = runState.targetFinishTime
+                    )
+                }
+            }
+        }
+    }
 
     fun setHours(hours: Int) {
         if (_uiState.value.status == TimerStatus.SETUP) {
@@ -154,85 +168,29 @@ class TimerViewModel : ViewModel() {
         val totalSec = current.hours * 3600L + current.minutes * 60L + current.seconds.toLong()
         if (totalSec <= 0L) return
 
-        val finishMillis = System.currentTimeMillis() + (totalSec * 1000L)
-        val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
-        val finishTimeStr = sdf.format(Date(finishMillis))
-
-        _uiState.update {
-            it.copy(
-                status = TimerStatus.RUNNING,
-                totalSeconds = totalSec,
-                remainingMillis = totalSec * 1000L,
-                targetFinishTime = finishTimeStr
-            )
+        val context = getApplication<Application>()
+        val intent = Intent(context, TimerService::class.java).apply {
+            action = TimerService.ACTION_START
+            putExtra(TimerService.EXTRA_TOTAL_SECONDS, totalSec)
         }
-
-        runTimerLoop()
+        ContextCompat.startForegroundService(context, intent)
     }
 
-    fun pauseTimer() {
-        if (_uiState.value.status == TimerStatus.RUNNING) {
-            timerJob?.cancel()
-            _uiState.update { it.copy(status = TimerStatus.PAUSED) }
-        }
-    }
+    fun pauseTimer() = sendCommand(TimerService.ACTION_PAUSE)
 
-    fun resumeTimer() {
-        if (_uiState.value.status == TimerStatus.PAUSED) {
-            val remainingSec = (_uiState.value.remainingMillis + 999L) / 1000L
-            val finishMillis = System.currentTimeMillis() + (remainingSec * 1000L)
-            val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
-            val finishTimeStr = sdf.format(Date(finishMillis))
-
-            _uiState.update {
-                it.copy(
-                    status = TimerStatus.RUNNING,
-                    targetFinishTime = finishTimeStr
-                )
-            }
-            runTimerLoop()
-        }
-    }
+    fun resumeTimer() = sendCommand(TimerService.ACTION_RESUME)
 
     fun deleteTimer() {
-        timerJob?.cancel()
-        _uiState.update {
-            it.copy(
-                status = TimerStatus.SETUP,
-                totalSeconds = 0L,
-                remainingMillis = 0L,
-                targetFinishTime = ""
-            )
-        }
+        val context = getApplication<Application>()
+        context.stopService(Intent(context, TimerService::class.java))
     }
 
     fun toggleLiveNotification() {
         _uiState.update { it.copy(showLiveNotification = !it.showLiveNotification) }
     }
 
-    private fun runTimerLoop() {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            val startTime = System.currentTimeMillis()
-            val initialMillis = _uiState.value.remainingMillis
-
-            while (_uiState.value.status == TimerStatus.RUNNING) {
-                val elapsed = System.currentTimeMillis() - startTime
-                val currentRemaining = (initialMillis - elapsed).coerceAtLeast(0L)
-
-                _uiState.update { it.copy(remainingMillis = currentRemaining) }
-
-                if (currentRemaining <= 0L) {
-                    _uiState.update { it.copy(status = TimerStatus.FINISHED) }
-                    break
-                }
-                delay(50L)
-            }
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        timerJob?.cancel()
+    private fun sendCommand(action: String) {
+        val context = getApplication<Application>()
+        context.startService(Intent(context, TimerService::class.java).setAction(action))
     }
 }
