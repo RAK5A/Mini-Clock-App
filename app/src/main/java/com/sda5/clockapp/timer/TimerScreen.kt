@@ -83,14 +83,6 @@ fun TimerScreen(
                 ),
                 actions = {
                     if (uiState.status == TimerStatus.RUNNING || uiState.status == TimerStatus.PAUSED) {
-                        // Live Notification toggle — commented out along with the banner itself below
-                        // IconButton(onClick = { viewModel.toggleLiveNotification() }) {
-                        //     Icon(
-                        //         imageVector = Icons.AutoMirrored.Filled.FormatListBulleted,
-                        //         contentDescription = "Toggle Live Banner",
-                        //         tint = MaterialTheme.colorScheme.onSurface
-                        //     )
-                        // }
                         IconButton(onClick = {
                             viewModel.addPreset(uiState.hours, uiState.minutes, uiState.seconds)
                         }) {
@@ -118,26 +110,6 @@ fun TimerScreen(
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Live Notification banner — commented out for now (its component, LiveNotificationCard,
-            // hasn't been added to this project yet)
-            // AnimatedVisibility(
-            //     visible = (uiState.status == TimerStatus.RUNNING || uiState.status == TimerStatus.PAUSED) && uiState.showLiveNotification,
-            //     enter = fadeIn(),
-            //     exit = fadeOut()
-            // ) {
-            //     LiveNotificationCard(
-            //         remainingDisplay = uiState.liveNotificationDisplay,
-            //         totalDisplay = uiState.totalDurationDisplay,
-            //         targetFinishTime = uiState.targetFinishTime,
-            //         isRunning = uiState.status == TimerStatus.RUNNING,
-            //         onPauseResumeToggle = {
-            //             if (uiState.status == TimerStatus.RUNNING) viewModel.pauseTimer()
-            //             else viewModel.resumeTimer()
-            //         },
-            //         onClose = { viewModel.toggleLiveNotification() }
-            //     )
-            // }
-
             Spacer(modifier = Modifier.weight(0.1f))
 
             when (uiState.status) {
