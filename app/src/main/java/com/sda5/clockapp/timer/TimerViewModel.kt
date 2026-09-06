@@ -185,10 +185,6 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         context.stopService(Intent(context, TimerService::class.java))
     }
 
-    fun toggleLiveNotification() {
-        _uiState.update { it.copy(showLiveNotification = !it.showLiveNotification) }
-    }
-
     private fun sendCommand(action: String) {
         val context = getApplication<Application>()
         context.startService(Intent(context, TimerService::class.java).setAction(action))
