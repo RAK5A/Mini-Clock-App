@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +51,7 @@ fun StopwatchScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -263,6 +263,8 @@ fun StopwatchScreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
+                ) {
+                    Text("Restart", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
