@@ -85,7 +85,7 @@ class TimerService : Service(), LifecycleEventObserver {
             stopSelf()
             return
         }
-        createChannel()
+        createChannels()
         TimerState.update {
             it.copy(
                 status = TimerStatus.RUNNING,
@@ -94,8 +94,6 @@ class TimerService : Service(), LifecycleEventObserver {
                 targetFinishTime = formatFinishTime(System.currentTimeMillis() + totalSeconds * 1000L)
             )
         }
-        // Android requires this call the moment a foreground service starts — no way around it.
-        // If the app is visible right now, we demote immediately after.
         startForeground(NOTIFICATION_ID, buildCountdownNotification())
         if (isAppInForeground) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -183,45 +181,51 @@ class TimerService : Service(), LifecycleEventObserver {
     private fun formatFinishTime(millis: Long): String =
         SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(millis))
 
-    private fun createChannel() {
+    private fun createChannels() {
         val manager = getSystemService<NotificationManager>() ?: return
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-        val channel = NotificationChannel(CHANNEL_ID, "Timer", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Timer countdown and completion alerts"
-            setSound(null, null)
-            enableVibration(false)
+        if (manager.getNotificationChannel(STATUS_CHANNEL_ID) == null) {
+            val statusChannel = NotificationChannel(
+                STATUS_CHANNEL_ID, "Timer status", NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Ongoing timer countdown status"
+                setSound(null, null)
+                enableVibration(false)
+            }
+            manager.createNotificationChannel(statusChannel)
         }
-        manager.createNotificationChannel(channel)
+        if (manager.getNotificationChannel(ALERT_CHANNEL_ID) == null) {
+            val alertChannel = NotificationChannel(
+                ALERT_CHANNEL_ID, "Timer alerts", NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Timer finished alert"
+                setSound(null, null)
+                enableVibration(false)
+            }
+            manager.createNotificationChannel(alertChannel)
+        }
     }
 
     private fun updateNotification() {
-        // Skip entirely while the app is visible — the running screen already
-        // shows this info, and the user asked not to see it duplicated as a system notification.
         if (isAppInForeground) return
         getSystemService<NotificationManager>()?.notify(NOTIFICATION_ID, buildCountdownNotification())
     }
 
     private fun buildCountdownNotification(): Notification {
         val state = TimerState.uiState.value
-
-        // direct user to the current page when exit the app
-        val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra("NAVIGATE_TO", "TIMER")
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        val isFinished = state.status == TimerStatus.FINISHED
+        val channelId = if (isFinished) ALERT_CHANNEL_ID else STATUS_CHANNEL_ID
 
         val contentIntent = PendingIntent.getActivity(
-            this,
-            1001,
-            intent,
+            this, 0,
+            Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setOngoing(state.status != TimerStatus.FINISHED)
+            .setOngoing(!isFinished)
             .setContentIntent(contentIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(if (isFinished) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
 
         when (state.status) {
@@ -278,7 +282,8 @@ class TimerService : Service(), LifecycleEventObserver {
         const val ACTION_CANCEL = "com.sda5.clockapp.timer.ACTION_CANCEL"
         const val ACTION_DISMISS = "com.sda5.clockapp.timer.ACTION_DISMISS"
         const val EXTRA_TOTAL_SECONDS = "extra_total_seconds"
-        const val CHANNEL_ID = "timer_channel"
+        const val STATUS_CHANNEL_ID = "timer_status_channel"
+        const val ALERT_CHANNEL_ID = "timer_alert_channel"
         const val NOTIFICATION_ID = 5001
     }
 }
