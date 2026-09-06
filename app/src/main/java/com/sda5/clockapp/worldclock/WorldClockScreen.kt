@@ -1,169 +1,221 @@
 package com.sda5.clockapp.worldclock
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
-import java.util.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sda5.clockapp.ClockApplication
+import com.sda5.clockapp.model.WorldClockCity
+import kotlinx.coroutines.delay
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
-
-data class WorldClock(
-    val city : String,
-    val country: String,
-    val timeZone: String
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorldClockScreen(
-    modifier: Modifier = Modifier,
-    onAddClick: () -> Unit = {}
+    onAddCity: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val clocks = listOf(
-        WorldClock("New York", "United States", "America/New_York"),
-        WorldClock("London", "United Kingdom", "Europe/London"),
-        WorldClock("Tokyo", "Japan", "Asia/Tokyo"),
-        WorldClock("Dubai", "UAE", "Asia/Dubai"),
-        WorldClock("Paris", "France", "Europe/Paris"),
-        WorldClock("Sydney", "Australia", "Australia/Sydney"),
-        WorldClock("Phnom Penh", "Cambodia", "Asia/Phnom_Penh")
+    val application = LocalContext.current.applicationContext as ClockApplication
+    val viewModel: WorldClockViewModel = viewModel(factory = WorldClockViewModelFactory(application))
+    val cities by viewModel.cities.collectAsState()
+
+    var now by remember { mutableStateOf(ZonedDateTime.now()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            now = ZonedDateTime.now()
+            delay(1000L)
+        }
+    }
+
+    WorldClockContent(
+        cities = cities,
+        now = now,
+        onAddCity = onAddCity,
+        onDeleteCity = { viewModel.deleteCity(it) },
+        modifier = modifier
     )
+}
+
+@Composable
+fun WorldClockContent(
+    cities: List<WorldClockCity>,
+    now: ZonedDateTime,
+    onAddCity: () -> Unit,
+    onDeleteCity: (WorldClockCity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val localZoneId = remember { ZoneId.systemDefault().id }
+    val localCity = remember(localZoneId) { formattedRegion(localZoneId) }
+    val localInfo = remember(localZoneId, now) { cityTimeInfo(localZoneId, now) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("World Clock", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick,
-                containerColor = Color(0xFF1A1A2E),
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add City")
-            }
-        },
-        containerColor = Color(0xFFF2F4F8)
-    ) { padding ->
-        LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp)
         ) {
-            item {
-                LocalTimeCard()
-            }
-            item {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    "Other Cities",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    text = "$localCity  ${localInfo.timeText}",
+//                    text = "All TimeZone",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                IconButton(onClick = onAddCity) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Add City",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
-            items(clocks) { clock ->
-                WorldClockCard(clock)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (cities.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No cities added",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(cities, key = { it.id }) { city ->
+                        CityCard(city = city, now = now, onDelete = { onDeleteCity(city) })
+                    }
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LocalTimeCard() {
-    val timeZone = TimeZone.getDefault()
-    var time by remember { mutableStateOf(getFormattedTime(timeZone)) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            time = getFormattedTime(timeZone)
-            kotlinx.coroutines.delay(1000)
-        }
-    }
+private fun CityCard(city: WorldClockCity, now: ZonedDateTime, onDelete: () -> Unit) {
+    val info = remember(city.zoneId, now) { cityTimeInfo(city.zoneId, now) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = {}, onLongClick = onDelete),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E))
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Local Time", color = Color.Gray, fontSize = 14.sp)
-            Text(
-                time,
-                color = Color.White,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                timeZone.id,
-                color = Color.LightGray,
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun WorldClockCard(clock: WorldClock) {
-    val timeZone = TimeZone.getTimeZone(clock.timeZone)
-    var time by remember { mutableStateOf(getFormattedTime(timeZone)) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            time = getFormattedTime(timeZone)
-            kotlinx.coroutines.delay(1000)
-        }
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(clock.city, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(clock.country, fontSize = 14.sp, color = Color.Gray)
+                Text(text = city.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "${info.dayLabel} · ${info.utcOffsetLabel}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Text(
-                time,
-                fontSize = 20.sp,
+                text = info.timeText,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1A1A2E)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
 
-private fun getFormattedTime(timeZone: TimeZone): String {
-    val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    sdf.timeZone = timeZone
-    return sdf.format(Date())
+@Preview(showBackground = true)
+@Composable
+private fun WorldClockContentPreview() {
+    MaterialTheme {
+        WorldClockContent(
+            cities = listOf(
+                WorldClockCity(id = 1L, zoneId = "America/New_York", displayName = "New York"),
+                WorldClockCity(id = 2L, zoneId = "Europe/London", displayName = "London"),
+                WorldClockCity(id = 3L, zoneId = "Asia/Tokyo", displayName = "Tokyo")
+            ),
+            now = ZonedDateTime.now(),
+            onAddCity = {},
+            onDeleteCity = {}
+        )
+    }
 }
+
+/*
+@Preview(showBackground = true)
+@Composable
+private fun WorldClockContentEmptyPreview() {
+    MaterialTheme {
+        WorldClockContent(
+            cities = emptyList(),
+            now = ZonedDateTime.now(),
+            onAddCity = {},
+            onDeleteCity = {}
+        )
+    }
+}*/

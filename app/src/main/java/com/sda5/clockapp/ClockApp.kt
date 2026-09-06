@@ -51,9 +51,13 @@ import com.sda5.clockapp.alarm.AlarmViewModelFactory
 import com.sda5.clockapp.navigation.ClockDestination
 import com.sda5.clockapp.stopwatch.StopwatchScreen
 import com.sda5.clockapp.timer.TimerScreen
+import com.sda5.clockapp.worldclock.AddCityScreen
 import com.sda5.clockapp.worldclock.WorldClockScreen
+import com.sda5.clockapp.worldclock.WorldClockViewModel
+import com.sda5.clockapp.worldclock.WorldClockViewModelFactory
 
 private const val ALARM_EDIT_ROUTE = "alarm_edit?alarmId={alarmId}"
+private const val ADD_CITY_ROUTE = "add_city"
 
 @Composable
 fun ClockApp(intent: Intent? = null) {
@@ -79,7 +83,7 @@ fun ClockApp(intent: Intent? = null) {
     }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val showNavBar = backStackEntry?.destination?.route != ALARM_EDIT_ROUTE
+    val showNavBar = backStackEntry?.destination?.route !in setOf(ALARM_EDIT_ROUTE, ADD_CITY_ROUTE)
 
     Scaffold(
         bottomBar = {
@@ -101,23 +105,33 @@ fun ClockApp(intent: Intent? = null) {
                 )
             }
             composable(ClockDestination.WorldClock.route) {
-                WorldClockScreen(
-                    onAddClick = { navController.navigate("search") }
-                )
+                WorldClockScreen(onAddCity = { navController.navigate(ADD_CITY_ROUTE) })
             }
             composable(ClockDestination.Stopwatch.route) { StopwatchScreen() }
             composable(ClockDestination.Timer.route) { TimerScreen() }
 
-            composable("search") {
-                com.sda5.clockapp.worldclock.SearchClockScreen(
-                    onCityAdded = { /* For now, cities are hardcoded in WorldClockScreen */ },
+            composable(ADD_CITY_ROUTE) {
+                val worldClockViewModel: WorldClockViewModel = viewModel(
+                    factory = WorldClockViewModelFactory(
+                        application
+                    )
+                )
+                AddCityScreen(
+                    onCitySelected = { zoneId, displayName ->
+                        worldClockViewModel.addCity(
+                            zoneId,
+                            displayName
+                        )
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
 
             composable(
                 route = ALARM_EDIT_ROUTE,
-                arguments = listOf(navArgument("alarmId") { type = NavType.LongType; defaultValue = -1L })
+                arguments = listOf(navArgument("alarmId") {
+                    type = NavType.LongType; defaultValue = -1L
+                })
             ) { backStack ->
                 val alarmId = backStack.arguments?.getLong("alarmId") ?: -1L
                 AlarmEditScreen(
@@ -172,7 +186,9 @@ private fun ClockPillNavBar(navController: NavHostController, currentDestination
                             .fillMaxHeight()
                             .clickable {
                                 navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
