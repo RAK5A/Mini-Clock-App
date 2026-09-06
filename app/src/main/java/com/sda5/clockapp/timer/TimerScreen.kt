@@ -1,6 +1,6 @@
 package com.sda5.clockapp.timer
 
-import androidx.compose.animation.AnimatedVisibility
+import android.app.Application
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -8,12 +8,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,12 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-// import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -51,16 +42,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sda5.clockapp.ui.components.StartButton
-// import com.sda5.clockapp.ui.components.LiveNotificationCard
 import com.sda5.clockapp.ui.components.TimeWheelPicker
 import com.sda5.clockapp.ui.theme.ClockAppTheme
 
@@ -128,6 +118,9 @@ fun TimerScreen(
 
                     PresetsRow(
                         presets = uiState.presets,
+                        currentHours = uiState.hours,
+                        currentMinutes = uiState.minutes,
+                        currentSeconds = uiState.seconds,
                         onSelectPreset = { viewModel.applyPreset(it) },
                         onDeletePreset = { viewModel.deletePreset(it) },
                         onAddCurrentAsPreset = {
@@ -167,7 +160,7 @@ fun TimerScreen(
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
                             Text(
@@ -178,9 +171,15 @@ fun TimerScreen(
                         }
 
                         val buttonBgColor = when (uiState.status) {
-                            TimerStatus.FINISHED -> MaterialTheme.colorScheme.primary
-                            TimerStatus.RUNNING -> MaterialTheme.colorScheme.error
+                            TimerStatus.RUNNING -> MaterialTheme.colorScheme.secondary
+                            TimerStatus.PAUSED -> MaterialTheme.colorScheme.primary
+                            TimerStatus.FINISHED -> MaterialTheme.colorScheme.error
                             else -> MaterialTheme.colorScheme.primary
+                        }
+                        val buttonContentColor = if (uiState.status == TimerStatus.FINISHED) {
+                            MaterialTheme.colorScheme.onError
+                        } else {
+                            MaterialTheme.colorScheme.onPrimary
                         }
                         val buttonText = when (uiState.status) {
                             TimerStatus.FINISHED -> "Reset"
@@ -205,7 +204,7 @@ fun TimerScreen(
                             shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = buttonBgColor,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                contentColor = buttonContentColor
                             )
                         ) {
                             Text(
@@ -218,79 +217,6 @@ fun TimerScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PresetsRow(
-    presets: List<PresetTime>,
-    onSelectPreset: (PresetTime) -> Unit,
-    onDeletePreset: (PresetTime) -> Unit,
-    onAddCurrentAsPreset: () -> Unit,
-    isCurrentValid: Boolean
-) {
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items(presets, key = { it.id }) { preset ->
-            PresetChip(
-                preset = preset,
-                onClick = { onSelectPreset(preset) },
-                onLongClick = { onDeletePreset(preset) }
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-        }
-
-        if (isCurrentValid) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .combinedClickable(onClick = onAddCurrentAsPreset),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Save Preset",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun PresetChip(
-    preset: PresetTime,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(70.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = preset.formattedString,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 
@@ -394,12 +320,14 @@ private fun ActiveCountdownView(
     }
 }
 
+/*
 @Composable
 @Preview(showBackground = true)
 private fun TimerScreenPreview() {
-    val previewViewModel = remember { TimerViewModel() }
+    val context = LocalContext.current
+    val previewViewModel = remember { TimerViewModel(context.applicationContext as Application) }
 
     ClockAppTheme {
         TimerScreen(viewModel = previewViewModel)
     }
-}
+}*/
