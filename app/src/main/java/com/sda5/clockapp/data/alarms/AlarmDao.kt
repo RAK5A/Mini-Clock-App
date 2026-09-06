@@ -5,7 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.sda5.clockapp.data.model.Alarm
+import com.sda5.clockapp.model.Alarm
 import kotlinx.coroutines.flow.Flow
 
 @Dao

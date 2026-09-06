@@ -12,7 +12,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.content.getSystemService
-import com.sda5.clockapp.data.model.Alarm
+import com.sda5.clockapp.model.Alarm
 
 class AlarmRingingService : Service() {
 
@@ -42,12 +42,16 @@ class AlarmRingingService : Service() {
             soundEnabled = intent.getBooleanExtra(EXTRA_SOUND_ENABLED, true),
             soundUri = intent.getStringExtra(EXTRA_SOUND_URI),
             vibrationEnabled = intent.getBooleanExtra(EXTRA_VIBRATION_ENABLED, true),
-            snoozeEnabled = intent.getBooleanExtra(EXTRA_SNOOZE_ENABLED, true)
+            snoozeEnabled = intent.getBooleanExtra(EXTRA_SNOOZE_ENABLED, true),
+            snoozeIntervalMinutes = intent.getIntExtra(EXTRA_SNOOZE_INTERVAL_MINUTES, 5),
+            snoozeRepeatLimit = intent.getIntExtra(EXTRA_SNOOZE_REPEAT_LIMIT, 3).takeIf { it != NO_LIMIT }
         )
+        val snoozeCount = intent.getIntExtra(EXTRA_SNOOZE_COUNT, 0)
 
-        // Must happen immediately — Android kills the service if startForeground()
-        // doesn't run within a few seconds of being started.
-        startForeground(alarm.id.hashCode(), NotificationHelper.buildRingingNotification(this, alarm))
+        startForeground(
+            alarm.id.hashCode(),
+            NotificationHelper.buildRingingNotification(this, alarm, snoozeCount)
+        )
 
         if (alarm.soundEnabled) startRinging(alarm.soundUri)
         if (alarm.vibrationEnabled) startVibrating()
@@ -75,7 +79,7 @@ class AlarmRingingService : Service() {
     }
 
     private fun startVibrating() {
-        val pattern = longArrayOf(0, 800, 800) // wait 0, vibrate 800ms, pause 800ms, loop
+        val pattern = longArrayOf(0, 800, 800)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
         } else {
@@ -103,5 +107,9 @@ class AlarmRingingService : Service() {
         const val EXTRA_SOUND_URI = "extra_sound_uri"
         const val EXTRA_VIBRATION_ENABLED = "extra_vibration_enabled"
         const val EXTRA_SNOOZE_ENABLED = "extra_snooze_enabled"
+        const val EXTRA_SNOOZE_INTERVAL_MINUTES = "extra_snooze_interval_minutes"
+        const val EXTRA_SNOOZE_REPEAT_LIMIT = "extra_snooze_repeat_limit"
+        const val EXTRA_SNOOZE_COUNT = "extra_snooze_count"
+        const val NO_LIMIT = -1
     }
 }

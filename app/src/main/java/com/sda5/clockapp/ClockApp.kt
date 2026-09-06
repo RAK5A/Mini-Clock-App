@@ -4,17 +4,34 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,10 +44,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sda5.clockapp.alarm.AlarmEditScreen
-import com.sda5.clockapp.navigation.ClockDestination
 import com.sda5.clockapp.alarm.AlarmScreen
 import com.sda5.clockapp.alarm.AlarmViewModel
 import com.sda5.clockapp.alarm.AlarmViewModelFactory
+import com.sda5.clockapp.navigation.ClockDestination
 import com.sda5.clockapp.stopwatch.StopwatchScreen
 import com.sda5.clockapp.timer.TimerScreen
 import com.sda5.clockapp.worldclock.WorldClockScreen
@@ -45,7 +62,7 @@ fun ClockApp() {
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* alarms still schedule either way — this only affects the ringing notification's visibility */ }
+    ) { /* alarms still schedule either way */ }
 
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -54,12 +71,12 @@ fun ClockApp() {
     }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val showBottomBar = backStackEntry?.destination?.route != ALARM_EDIT_ROUTE
+    val showNavBar = backStackEntry?.destination?.route != ALARM_EDIT_ROUTE
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar) {
-                ClockBottomNavBar(navController, backStackEntry?.destination)
+            if (showNavBar) {
+                ClockPillNavBar(navController, backStackEntry?.destination)
             }
         }
     ) { innerPadding ->
@@ -95,27 +112,64 @@ fun ClockApp() {
 }
 
 @Composable
-private fun ClockBottomNavBar(navController: NavHostController, currentDestination: NavDestination?) {
-    NavigationBar {
-        ClockDestination.items.forEach { destination ->
-            val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                        contentDescription = destination.label
-                    )
-                },
-                label = { Text(destination.label) }
+private fun ClockPillNavBar(navController: NavHostController, currentDestination: NavDestination?) {
+    val items = ClockDestination.items
+    val selectedIndex = items.indexOfFirst { destination ->
+        currentDestination?.hierarchy?.any { it.route == destination.route } == true
+    }.coerceAtLeast(0)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .height(56.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(6.dp)
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val segmentWidth = maxWidth / items.size
+            val indicatorOffset by animateDpAsState(
+                targetValue = segmentWidth * selectedIndex,
+                label = "navIndicator"
             )
+
+            Box(
+                modifier = Modifier
+                    .offset(x = indicatorOffset)
+                    .width(segmentWidth)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surface)
+            )
+
+            Row(modifier = Modifier.fillMaxSize()) {
+                items.forEachIndexed { index, destination ->
+                    val selected = index == selectedIndex
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = destination.label,
+                            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 13.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.sda5.clockapp.data.model
+package com.sda5.clockapp.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -15,5 +15,7 @@ data class Alarm(
     val soundUri: String? = null, // null = use the system default alarm sound
     val vibrationEnabled: Boolean = true,
     val snoozeEnabled: Boolean = true,
+    val snoozeIntervalMinutes: Int = 5,
+    val snoozeRepeatLimit: Int? = 3, // null = Forever
     val isEnabled: Boolean = true,
 )

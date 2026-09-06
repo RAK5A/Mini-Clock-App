@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
-import com.sda5.clockapp.data.model.Alarm
+import com.sda5.clockapp.model.Alarm
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -25,16 +25,13 @@ object NotificationHelper {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Alarm ringing notifications"
-            // Sound and vibration are handled manually by AlarmRingingService now,
-            // so each alarm can use its own ringtone — a channel's sound/vibration
-            // is fixed at creation and shared by every notification on it.
             setSound(null, null)
             enableVibration(false)
         }
         manager.createNotificationChannel(channel)
     }
 
-    fun buildRingingNotification(context: Context, alarm: Alarm): Notification {
+    fun buildRingingNotification(context: Context, alarm: Alarm, snoozeCount: Int): Notification {
         val requestCode = alarm.id.hashCode()
 
         val dismissIntent = Intent(context, AlarmActionReceiver::class.java).apply {
@@ -58,10 +55,14 @@ object NotificationHelper {
             .setOngoing(true)
             .addAction(0, "Dismiss", dismissPendingIntent)
 
-        if (alarm.snoozeEnabled) {
+        val canSnooze = alarm.snoozeEnabled &&
+                (alarm.snoozeRepeatLimit == null || snoozeCount < alarm.snoozeRepeatLimit)
+
+        if (canSnooze) {
             val snoozeIntent = Intent(context, AlarmActionReceiver::class.java).apply {
                 action = AlarmActionReceiver.ACTION_SNOOZE
                 putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarm.id)
+                putExtra(AlarmReceiver.EXTRA_SNOOZE_COUNT, snoozeCount)
             }
             val snoozePendingIntent = PendingIntent.getBroadcast(
                 context, requestCode + 1, snoozeIntent,

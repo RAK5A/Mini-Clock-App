@@ -1,6 +1,6 @@
 package com.sda5.clockapp.alarm
 
-import com.sda5.clockapp.data.model.Alarm
+import com.sda5.clockapp.model.Alarm
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
