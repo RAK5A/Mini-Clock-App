@@ -75,9 +75,20 @@ fun ClockApp() {
                     onEditAlarm = { id -> navController.navigate("alarm_edit?alarmId=$id") }
                 )
             }
-            composable(ClockDestination.WorldClock.route) { WorldClockScreen() }
+            composable(ClockDestination.WorldClock.route) {
+                WorldClockScreen(
+                    onAddClick = { navController.navigate("search") }
+                )
+            }
             composable(ClockDestination.Stopwatch.route) { StopwatchScreen() }
             composable(ClockDestination.Timer.route) { TimerScreen() }
+
+            composable("search") {
+                com.sda5.clockapp.worldclock.SearchClockScreen(
+                    onCityAdded = { /* For now, cities are hardcoded in WorldClockScreen */ },
+                    onBack = { navController.popBackStack() }
+                )
+            }
 
             composable(
                 route = ALARM_EDIT_ROUTE,
