@@ -203,9 +203,17 @@ class TimerService : Service(), LifecycleEventObserver {
 
     private fun buildCountdownNotification(): Notification {
         val state = TimerState.uiState.value
+
+        // direct user to the current page when exit the app
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra("NAVIGATE_TO", "TIMER")
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
         val contentIntent = PendingIntent.getActivity(
-            this, 0,
-            Intent(this, MainActivity::class.java),
+            this,
+            1001,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 

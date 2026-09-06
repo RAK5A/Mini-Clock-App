@@ -1,6 +1,7 @@
 package com.sda5.clockapp
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,7 +56,7 @@ import com.sda5.clockapp.worldclock.WorldClockScreen
 private const val ALARM_EDIT_ROUTE = "alarm_edit?alarmId={alarmId}"
 
 @Composable
-fun ClockApp() {
+fun ClockApp(intent: Intent? = null) {
     val navController = rememberNavController()
     val application = LocalContext.current.applicationContext as ClockApplication
     val alarmViewModel: AlarmViewModel = viewModel(factory = AlarmViewModelFactory(application))
@@ -65,8 +66,15 @@ fun ClockApp() {
     ) { /* alarms still schedule either way */ }
 
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        val targetRoute = intent?.getStringExtra("NAVIGATE_TO")
+        if (!targetRoute.isNullOrEmpty()) {
+            navController.navigate(targetRoute) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
         }
     }
 

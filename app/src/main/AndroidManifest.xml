@@ -24,7 +24,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ClockApp">
+        android:theme="@style/Theme.ClockApp"
+        android:exported="true"
+        android:launchMode="singleTop">
         <activity
             android:name=".MainActivity"
             android:exported="true"
