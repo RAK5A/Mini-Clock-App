@@ -4,12 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class StopwatchStatus {
-    IDLE,
-    RUNNING,
-    PAUSED
-}
-
 data class LapTableEntry(
     val lapNumber: Int,
     val lapDurationMs: Long,
@@ -17,13 +11,13 @@ data class LapTableEntry(
 )
 
 data class StopwatchRunState(
-    val status: StopwatchStatus = StopwatchStatus.IDLE,
-    val elapsedTimeMs: Long = 0L,
+    val isRunning: Boolean = false,
+    val elapsedMillis: Long = 0L,
     val laps: List<LapTableEntry> = emptyList()
 )
 
-// Shared between StopwatchService (writer) and StopwatchViewModel (reader) so the running
-// stopwatch survives when the app closes or is backgrounded.
+// Shared between StopwatchService (writer) and StopwatchViewModel (reader) — same
+// pattern as TimerState, so the running stopwatch survives the app closing.
 object StopwatchState {
     private val _uiState = MutableStateFlow(StopwatchRunState())
     val uiState: StateFlow<StopwatchRunState> = _uiState.asStateFlow()
