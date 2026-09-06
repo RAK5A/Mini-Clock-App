@@ -65,8 +65,15 @@ fun ClockApp(intent: Intent? = null) {
         ActivityResultContracts.RequestPermission()
     ) { /* alarms still schedule either way */ }
 
-    LaunchedEffect(Unit) {
-        val targetRoute = intent?.getStringExtra("NAVIGATE_TO")
+    LaunchedEffect(intent) {
+        val rawRoute = intent?.getStringExtra("NAVIGATE_TO")
+        val targetRoute = when (rawRoute?.lowercase()) {
+            "timer" -> ClockDestination.Timer.route
+            "stopwatch" -> ClockDestination.Stopwatch.route
+            "alarm" -> ClockDestination.Alarm.route
+            "world_clock" -> ClockDestination.WorldClock.route
+            else -> rawRoute
+        }
         if (!targetRoute.isNullOrEmpty()) {
             navController.navigate(targetRoute) {
                 popUpTo(navController.graph.findStartDestination().id) {
@@ -75,6 +82,12 @@ fun ClockApp(intent: Intent? = null) {
                 launchSingleTop = true
                 restoreState = true
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 

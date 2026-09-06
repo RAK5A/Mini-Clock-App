@@ -1,7 +1,5 @@
 package com.sda5.clockapp.stopwatch
 
-import android.os.SystemClock
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,70 +9,45 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import androidx.lifecycle.viewmodel.compose.viewModel
 import java.util.Locale
 
-val DarkNavyBackground = Color(0xFF000000)
-val BlueButtonColor = Color(0xFF2196F3)
-val RedStopButtonColor = Color(0xFFE53935)
-val SoftPinkTimeColor = Color(0xFFFFCDD2)
-
-data class LapTableEntry(
-    val lapNumber: Int,
-    val lapDurationMs: Long,
-    val overallTimeMs: Long
-)
-
 @Composable
-fun StopwatchScreen(modifier: Modifier = Modifier) {
-    var started by remember { mutableStateOf(false) }
-    var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val laps = remember { mutableStateListOf<LapTableEntry>() }
+fun StopwatchScreen(
+    modifier: Modifier = Modifier,
+    viewModel: StopwatchViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val isRunning = uiState.status == StopwatchStatus.RUNNING
+    val isPaused = uiState.status == StopwatchStatus.PAUSED
+    val isIdle = uiState.status == StopwatchStatus.IDLE
+    val hasTime = uiState.elapsedTimeMs > 0L
 
-    // High precision timer logic (hundredths of a second)
-    LaunchedEffect(started) {
-        if (started) {
-            var lastTime = SystemClock.elapsedRealtime()
-            while (started) {
-                delay(10)
-                val now = SystemClock.elapsedRealtime()
-                elapsedTimeMs += (now - lastTime)
-                lastTime = now
-            }
-        }
-    }
-
-    val timeDisplay = formatLapTime(elapsedTimeMs)
+    val timeDisplay = formatLapTime(uiState.elapsedTimeMs)
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = DarkNavyBackground
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
@@ -85,7 +58,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Time Display (No Circle Background)
+            // Time Display
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -94,7 +67,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
             ) {
                 Text(
                     text = timeDisplay,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
@@ -119,7 +92,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                     Text(
                         text = "Lap",
                         fontSize = 16.sp,
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Start
@@ -127,7 +100,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                     Text(
                         text = "Lap times",
                         fontSize = 16.sp,
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1.5f),
                         textAlign = TextAlign.Center
@@ -135,7 +108,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                     Text(
                         text = "Overall time",
                         fontSize = 16.sp,
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1.5f),
                         textAlign = TextAlign.End
@@ -143,7 +116,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                 }
 
                 HorizontalDivider(
-                    color = Color.Gray.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
@@ -153,7 +126,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(laps) { lap ->
+                    items(uiState.laps) { lap ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -165,7 +138,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                             Text(
                                 text = String.format(Locale.US, "%02d", lap.lapNumber),
                                 fontSize = 18.sp,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Normal,
                                 fontFamily = FontFamily.Monospace,
                                 modifier = Modifier.weight(1f),
@@ -176,7 +149,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                             Text(
                                 text = formatLapTime(lap.lapDurationMs),
                                 fontSize = 18.sp,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontFamily = FontFamily.Monospace,
                                 modifier = Modifier.weight(1.5f),
                                 textAlign = TextAlign.Center
@@ -186,7 +159,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                             Text(
                                 text = formatLapTime(lap.overallTimeMs),
                                 fontSize = 18.sp,
-                                color = SoftPinkTimeColor,
+                                color = MaterialTheme.colorScheme.secondary,
                                 fontFamily = FontFamily.Monospace,
                                 modifier = Modifier.weight(1.5f),
                                 textAlign = TextAlign.End
@@ -196,7 +169,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            // Controls Row (Start/Stop, Lap, Restart)
+            // Controls Row (Start/Stop/Resume, Lap, Reset)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,21 +177,40 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Solid Start / Stop Button
+                // Start / Stop / Resume Button
+                val startStopContainerColor = when {
+                    isRunning -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.primary
+                }
+                val startStopContentColor = when {
+                    isRunning -> MaterialTheme.colorScheme.onError
+                    else -> MaterialTheme.colorScheme.onPrimary
+                }
+                val startStopText = when {
+                    isRunning -> "Stop"
+                    isPaused -> "Resume"
+                    else -> "Start"
+                }
+
                 Button(
-                    onClick = { started = !started },
+                    onClick = {
+                        when {
+                            isRunning -> viewModel.pauseStopwatch()
+                            isPaused -> viewModel.resumeStopwatch()
+                            else -> viewModel.startStopwatch()
+                        }
+                    },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
-                    shape = CircleShape,
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (started) RedStopButtonColor else BlueButtonColor,
-                        contentColor = Color.White
+                        containerColor = startStopContainerColor,
+                        contentColor = startStopContentColor
                     )
                 ) {
                     Text(
-                        text = if (!started) "Start" else "Stop",
-                        color = Color.White,
+                        text = startStopText,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -226,31 +218,23 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Solid Lap Button
+                // Lap Button
                 Button(
-                    onClick = {
-                        if (started) {
-                            val previousOverall = laps.firstOrNull()?.overallTimeMs ?: 0L
-                            val lapDuration = elapsedTimeMs - previousOverall
-                            val nextNumber = laps.size + 1
-                            laps.add(0, LapTableEntry(nextNumber, lapDuration, elapsedTimeMs))
-                        }
-                    },
-                    enabled = started,
+                    onClick = { viewModel.lap() },
+                    enabled = isRunning,
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
-                    shape = CircleShape,
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = BlueButtonColor,
-                        contentColor = Color.White,
-                        disabledContainerColor = BlueButtonColor.copy(alpha = 0.5f),
-                        disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 ) {
                     Text(
                         text = "Lap",
-                        color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -258,22 +242,24 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Solid Restart / Reset Button
+                // Reset Button
+                val isResetEnabled = !isIdle || hasTime
                 Button(
-                    onClick = {
-                        started = false
-                        elapsedTimeMs = 0L
-                        laps.clear()
-                    },
+                    onClick = { viewModel.resetStopwatch() },
+                    enabled = isResetEnabled,
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = BlueButtonColor)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
                 ) {
                     Text(
-                        text = "Restart",
-                        color = Color.White,
+                        text = "Reset",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -283,7 +269,7 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
     }
 }
 
-private fun formatLapTime(milliseconds: Long): String {
+fun formatLapTime(milliseconds: Long): String {
     val hundredths = (milliseconds % 1000) / 10
     val totalSeconds = milliseconds / 1000
     val seconds = totalSeconds % 60
