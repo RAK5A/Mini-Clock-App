@@ -49,6 +49,14 @@ import kotlinx.coroutines.delay
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+
+data class WorldClock(
+    val city : String,
+    val country: String,
+    val timeZone: String
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorldClockScreen(
     onAddCity: () -> Unit,
