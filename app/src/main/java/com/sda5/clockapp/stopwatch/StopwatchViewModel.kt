@@ -4,31 +4,49 @@ import android.app.Application
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class StopwatchViewModel(application: Application) : AndroidViewModel(application) {
+    private val _uiState = MutableStateFlow(StopwatchRunState())
+    val uiState: StateFlow<StopwatchRunState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<StopwatchRunState> = StopwatchState.uiState
-
-    fun toggleStartStop() {
-        val context = getApplication<Application>()
-        val intent = Intent(context, StopwatchService::class.java)
-        if (uiState.value.isRunning) {
-            intent.action = StopwatchService.ACTION_PAUSE
-            context.startService(intent)
-        } else {
-            intent.action = StopwatchService.ACTION_START
-            ContextCompat.startForegroundService(context, intent)
+    init {
+        viewModelScope.launch {
+            StopwatchState.uiState.collect { runState ->
+                _uiState.update { runState }
+            }
         }
     }
 
-    fun addLap() {
+    fun startStopwatch() {
         val context = getApplication<Application>()
-        context.startService(Intent(context, StopwatchService::class.java).setAction(StopwatchService.ACTION_LAP))
+        val intent = Intent(context, StopwatchService::class.java).apply {
+            action = StopwatchService.ACTION_START
+        }
+        ContextCompat.startForegroundService(context, intent)
     }
 
-    fun restart() {
+    fun pauseStopwatch() = sendCommand(StopwatchService.ACTION_PAUSE)
+
+    fun resumeStopwatch() = sendCommand(StopwatchService.ACTION_RESUME)
+
+    fun lap() = sendCommand(StopwatchService.ACTION_LAP)
+
+    fun resetStopwatch() {
         val context = getApplication<Application>()
-        context.stopService(Intent(context, StopwatchService::class.java))
+        val intent = Intent(context, StopwatchService::class.java).apply {
+            action = StopwatchService.ACTION_RESET
+        }
+        context.startService(intent)
+    }
+
+    private fun sendCommand(action: String) {
+        val context = getApplication<Application>()
+        context.startService(Intent(context, StopwatchService::class.java).setAction(action))
     }
 }
