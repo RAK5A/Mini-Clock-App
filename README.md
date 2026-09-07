@@ -74,6 +74,9 @@ git merge main
 
 **9. Open a Pull Request (PR) on GitHub from your branch into `main`, and obtain a code review before merging.**
 
+### Video Demo:
+https://drive.google.com/file/d/1vWkuYNTaVS1SBjhB3Bev44gKpNC0pGkG/view?usp=sharing
+
 ### Project Structure
 ```text
 com.sda5.clockapp/
