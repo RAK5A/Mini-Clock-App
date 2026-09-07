@@ -1,129 +1,133 @@
 # Clock App
 
-A Jetpack Compose Android clock app with Alarm, World Clock, Stopwatch, and Timer tabs.
+A Jetpack Compose Android clock app featuring Alarm, World Clock, Stopwatch, and Timer tabs.
 
-## Getting started
-**1. Clone the repo:**
-```bash
-git clone https://github.com/RAK5A/Mini-Clock-App.git
-```
+## Getting Started
 
+**1. Clone the repository:**
 ```bash
+git clone [https://github.com/RAK5A/Mini-Clock-App.git](https://github.com/RAK5A/Mini-Clock-App.git)
 cd Mini-Clock-App
 ```
+**2. Open the project in Android Studio and run a Gradle sync.**
+### Branch Workflow
+**We do not commit directly to main. Every change goes through its own feature branch and a pull request.**
 
-**2. Open the folder in Android Studio and let Gradle sync.**
+**3. Ensure your local main branch is up to date:**
+```bash
+git checkout main
+git pull origin main
+```
 
-## Branch workflow
-We don't commit directly to `main`. Every change goes through its own branch and a pull request.
-
-**3. Make sure main is up to date:**
-   
-   ```bash
-   git checkout main
-   ```
-   
-   ```bash
-   git pull origin main
-   ```
-
-**4. Make your branch.** Name it after yourself: full name, lowercase, words
-joined by hyphens. `Chea Reaksa` becomes `chea-reaksa`.
-
+**4. Create your branch. Name it after yourself (lowercase, words joined by hyphens; e.g., `Chea Reaksa` becomes `chea-reaksa`):**
 ```bash
 git checkout -b chea-reaksa
 ```
 
+**5. Stage your changes:**
 
-**5. Work, then stage**
-   
+Staging specific files is recommended to prevent unintended commits:
+```bash
+git add <path-to-modified-file>
+```
+Or stage all modified files at once:
 ```bash
 git add .
 ```
-I recommend to add the files you did instead to prevent error but `git add .` should be fine too
 
+**6. Commit your staged changes using clear commit messages:**
 ```bash
-git add <modified files>
+git commit -m "feat(alarm): add alarm screen scaffold"
 ```
-**6. After all you added all your files, commit it**
+**Recommended commit conventions:**
 
-```bash
-git commit -m "Add alarm screen scaffold"
-```
-**Some `git commit` messages before pushing:**
-- New feature
-```text
-feat(alarm): add ability to set recurring alarms
-```
+- Feature: `feat(alarm): add ability to set recurring alarms`
 
-- Bug fix
-```text
-fix(worldclock): correct timezone offset calculation
-```
+- Bug Fix: `fix(worldclock): correct timezone offset calculation`
 
-- Refactoring
-```text
-refactor(stopwatch): use StateFlow instead of LiveData
-```
+- Refactoring: `refactor(stopwatch): use StateFlow instead of LiveData`
 
-- Documentation
-```text
-docs: add setup instructions for new developers
-```
+- Documentation: `docs: add setup instructions for new developers`
 
-- Style fixes
-```text
-style: apply ktlint formatting across all files
-```
+- Style: `style: apply ktlint formatting across all files`
 
-- Performance
-```text
-perf(timer): reduce UI recompositions by 40%
-```
+- Performance: `perf(timer): reduce UI recompositions by 40%`
 
-**7. Push to GitHub Repository.** The first push needs `-u`, after that `git push` is
-enough.
+**7. Push to the GitHub repository:**
 
+For the first push of a new branch:
 ```bash
 git push -u origin chea-reaksa
 ```
-
+For subsequent pushes:
 ```bash
 git push
 ```
 
-**8. If main has moved on while you were working, sync before pushing:**
-
+**8. If main has moved forward while you were working, sync before pushing:**
 ```bash
 git checkout main
-```
-
-```bash
 git pull origin main
-```
-
-```bash
-git checkout kimpheng
-```
-
-```bash
+git checkout chea-reaksa
 git merge main
 ```
 
-**9. Open a pull request on GitHub from your branch into `main`, and get it reviewed before merging.**
+**9. Open a Pull Request (PR) on GitHub from your branch into `main`, and obtain a code review before merging.**
 
-## Project structure
-- `app/src/main/java/com/reaksa/clockapp/`
-  - `MainActivity.kt`
-  - `ClockApp.kt`
-  - `navigation/`
-    - `ClockDestination.kt`
-  - `screens/`
-    - `AlarmScreen.kt`
-    - `WorldClockScreen.kt`
-    - `StopwatchScreen.kt`
-    - `TimerScreen.kt`
-  - `theme/`
-    - `Color.kt`
-    - `Theme.kt`
-    - `Type.kt`
+### Project Structure
+```text
+com.sda5.clockapp/
+├── alarm/                     # Alarm scheduling, notifications, background receivers, and UI
+│   ├── AlarmActionReceiver.kt
+│   ├── AlarmEditScreen.kt
+│   ├── AlarmReceiver.kt
+│   ├── AlarmRingingService.kt
+│   ├── AlarmScheduler.kt
+│   ├── AlarmScreen.kt
+│   ├── AlarmTimeUtils.kt
+│   ├── AlarmViewModel.kt
+│   ├── AlarmViewModelFactory.kt
+│   ├── BootReceiver.kt
+│   └── NotificationHelper.kt
+├── data/                      # Room Database setup, Converters, and DAOs
+│   ├── AlarmDao.kt
+│   ├── ClockDatabase.kt
+│   ├── DayOfWeekSetConverter.kt
+│   └── WorldClockDao.kt
+├── model/                     # Data entities for Alarms and World Clock Cities
+│   ├── Alarm.kt
+│   └── WorldClockCity.kt
+├── navigation/                # Navigation destinations and routing
+│   └── ClockDestination.kt
+├── stopwatch/                 # Background stopwatch service, lap history, and UI
+│   ├── LapHistoryTable.kt
+│   ├── StopwatchScreen.kt
+│   ├── StopwatchService.kt
+│   ├── StopwatchState.kt
+│   ├── StopwatchTimeUtils.kt
+│   └── StopwatchViewModel.kt
+├── timer/                     # Timer service, preset configurations, state management, and UI
+│   ├── TimerPresets.kt
+│   ├── TimerScreen.kt
+│   ├── TimerService.kt
+│   ├── TimerState.kt
+│   └── TimerViewModel.kt
+├── ui/                        # Reusable design system components and Material 3 theme
+│   ├── components/
+│   │   ├── SelectableRow.kt
+│   │   ├── StartButton.kt
+│   │   └── WheelPicker.kt
+│   └── theme/
+│       ├── Color.kt
+│       ├── Theme.kt
+│       └── Type.kt
+├── worldclock/                # World clock city management, timezone utilities, and UI
+│   ├── AddCityScreen.kt
+│   ├── WorldClockScreen.kt
+│   ├── WorldClockTimeUtils.kt
+│   ├── WorldClockViewModel.kt
+│   └── WorldClockViewModelFactory.kt
+├── ClockApp.kt                # Main app Composable container & bottom navigation layout
+├── ClockApplication.kt        # Global Application class
+└── MainActivity.kt            # Entry point activity
+```
