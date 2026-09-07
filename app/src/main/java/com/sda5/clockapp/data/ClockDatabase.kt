@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.sda5.clockapp.data.alarms.AlarmDao
+import com.sda5.clockapp.data.AlarmDao
 import com.sda5.clockapp.model.Alarm
 import com.sda5.clockapp.model.WorldClockCity
 

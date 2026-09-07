@@ -2,8 +2,8 @@ package com.sda5.clockapp.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sda5.clockapp.data.AlarmDao
 import com.sda5.clockapp.model.Alarm
-import com.sda5.clockapp.data.alarms.AlarmDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -62,4 +62,10 @@ class AlarmViewModel(
         val (hours, minutes) = countdownText(LocalDateTime.now(), next)
         _snackbarMessage.value = "Alarm set for $hours hours and $minutes minutes from now."
     }
+
+    fun deleteAlarms(ids: Set<Long>) = viewModelScope.launch {
+        alarms.value.filter { it.id in ids }.forEach { scheduler.cancel(it) }
+        dao.deleteByIds(ids)
+    }
 }
+

@@ -157,10 +157,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deletePreset(preset: PresetTime) {
-        _uiState.update { state ->
-            state.copy(presets = state.presets.filterNot { it.id == preset.id })
-        }
+    fun deletePresets(ids: Set<String>) {
+        _uiState.update { state -> state.copy(presets = state.presets.filterNot { it.id in ids }) }
     }
 
     fun startTimer() {

@@ -25,7 +25,7 @@ class WorldClockViewModel(private val dao: WorldClockDao) : ViewModel() {
         )
     }
 
-    fun deleteCity(city: WorldClockCity) = viewModelScope.launch {
-        dao.delete(city)
+    fun deleteCities(ids: Set<Long>) = viewModelScope.launch {
+        dao.deleteByIds(ids)
     }
 }
