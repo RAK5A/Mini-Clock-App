@@ -5,15 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.sda5.clockapp.data.AlarmDao
 import com.sda5.clockapp.model.Alarm
+import com.sda5.clockapp.model.PresetTime
 import com.sda5.clockapp.model.WorldClockCity
 
-@Database(entities = [Alarm::class, WorldClockCity::class], version = 4)
+@Database(entities = [Alarm::class, WorldClockCity::class, PresetTime::class], version = 5)
 @TypeConverters(DayOfWeekSetConverter::class)
 abstract class ClockDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun worldClockDao(): WorldClockDao
+    abstract fun presetTimeDao(): PresetTimeDao
 
     companion object {
         @Volatile private var instance: ClockDatabase? = null

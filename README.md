@@ -93,9 +93,11 @@ com.sda5.clockapp/
 │   ├── AlarmDao.kt
 │   ├── ClockDatabase.kt
 │   ├── DayOfWeekSetConverter.kt
+│   ├── PresetTimeDao.kt
 │   └── WorldClockDao.kt
 ├── model/                     # Data entities for Alarms and World Clock Cities
 │   ├── Alarm.kt
+│   ├── PresetTime.kt
 │   └── WorldClockCity.kt
 ├── navigation/                # Navigation destinations and routing
 │   └── ClockDestination.kt
