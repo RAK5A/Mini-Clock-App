@@ -122,10 +122,10 @@ fun TimerScreen(
                         currentMinutes = uiState.minutes,
                         currentSeconds = uiState.seconds,
                         onSelectPreset = { viewModel.applyPreset(it) },
-                        onDeletePreset = { viewModel.deletePreset(it) },
                         onAddCurrentAsPreset = {
                             viewModel.addPreset(uiState.hours, uiState.minutes, uiState.seconds)
                         },
+                        onDeleteSelected = { ids -> viewModel.deletePresets(ids) },
                         isCurrentValid = uiState.isStartEnabled
                     )
 
@@ -320,7 +320,6 @@ private fun ActiveCountdownView(
     }
 }
 
-/*
 @Composable
 @Preview(showBackground = true)
 private fun TimerScreenPreview() {
@@ -330,4 +329,4 @@ private fun TimerScreenPreview() {
     ClockAppTheme {
         TimerScreen(viewModel = previewViewModel)
     }
-}*/
+}

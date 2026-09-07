@@ -15,10 +15,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -47,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sda5.clockapp.model.Alarm
+import com.sda5.clockapp.ui.components.SelectableRow
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -63,6 +63,8 @@ fun AlarmScreen(
     val snackbarMessage by alarmViewModel.snackbarMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var menuExpanded by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+    val isSelectionMode = selectedIds.isNotEmpty()
 
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
@@ -95,51 +97,78 @@ fun AlarmScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (nextEntry != null) {
-                    val (hours, minutes) = countdownText(LocalDateTime.now(), nextEntry.second)
+                if (isSelectionMode) {
                     Text(
-                        text = "Next alarm in ${hours}h ${minutes}m",
+                        text = "${selectedIds.size} selected",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                } else {
-                    Text(
-                        text = "No upcoming alarms",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onAddAlarm) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add Alarm",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                    Row {
+                        IconButton(onClick = { selectedIds = emptySet() }) {
                             Icon(
-                                imageVector = Icons.Filled.Settings,
-                                contentDescription = "Options",
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Cancel selection",
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Delete all alarms") },
-                                onClick = {
-                                    menuExpanded = false
-                                    alarmViewModel.deleteAllAlarms()
-                                }
+                        IconButton(onClick = {
+                            alarmViewModel.deleteAlarms(selectedIds)
+                            selectedIds = emptySet()
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Delete selected",
+                                tint = MaterialTheme.colorScheme.error
                             )
+                        }
+                    }
+                } else {
+                    if (nextEntry != null) {
+                        val (hours, minutes) = countdownText(LocalDateTime.now(), nextEntry.second)
+                        Text(
+                            text = "Next alarm in ${hours}h ${minutes}m",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = "No upcoming alarms",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onAddAlarm) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Add Alarm",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Settings,
+                                    contentDescription = "Options",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Delete all alarms") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        alarmViewModel.deleteAllAlarms()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -148,15 +177,8 @@ fun AlarmScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (alarms.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No alarms",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "No alarms", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
@@ -165,17 +187,25 @@ fun AlarmScreen(
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
                     itemsIndexed(alarms, key = { _, alarm -> alarm.id }) { index, alarm ->
-                        AlarmCard(
-                            alarm = alarm,
-                            index = index,
+                        SelectableRow(
+                            isSelectionMode = isSelectionMode,
+                            isSelected = alarm.id in selectedIds,
+                            onToggleSelected = {
+                                selectedIds = if (alarm.id in selectedIds) selectedIds - alarm.id else selectedIds + alarm.id
+                            },
                             onClick = { onEditAlarm(alarm.id) },
-                            onToggle = { enabled -> alarmViewModel.setEnabled(alarm.id, enabled) }
-                        )
+                            onLongClick = { selectedIds = setOf(alarm.id) }
+                        ) {
+                            AlarmCard(
+                                alarm = alarm,
+                                index = index,
+                                isSelectionMode = isSelectionMode,
+                                onToggle = { enabled -> alarmViewModel.setEnabled(alarm.id, enabled) }
+                            )
+                        }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -184,11 +214,10 @@ fun AlarmScreen(
 private fun AlarmCard(
     alarm: Alarm,
     index: Int,
-    onClick: () -> Unit,
+    isSelectionMode: Boolean,
     onToggle: (Boolean) -> Unit
 ) {
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -210,8 +239,7 @@ private fun AlarmCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = LocalTime.of(alarm.hour, alarm.minute)
-                        .format(DateTimeFormatter.ofPattern("h:mm a")),
+                    text = LocalTime.of(alarm.hour, alarm.minute).format(DateTimeFormatter.ofPattern("h:mm a")),
                     fontFamily = FontFamily.Monospace,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
@@ -235,6 +263,7 @@ private fun AlarmCard(
             Switch(
                 checked = alarm.isEnabled,
                 onCheckedChange = onToggle,
+                enabled = !isSelectionMode,
                 colors = SwitchDefaults.colors(
                     checkedTrackColor = MaterialTheme.colorScheme.secondary,
                     checkedThumbColor = MaterialTheme.colorScheme.onSecondary
@@ -258,6 +287,7 @@ fun AlarmScreenPreview() {
     AlarmCard(
         alarm = Alarm(id = 2L, hour = 14, minute = 0, label = "", isEnabled = false),
         index = 0,
-        onClick = {}
-    ) { }
+        isSelectionMode = false,
+        onToggle = {}
+    )
 }

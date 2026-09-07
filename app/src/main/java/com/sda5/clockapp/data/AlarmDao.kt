@@ -1,4 +1,4 @@
-package com.sda5.clockapp.data.alarms
+package com.sda5.clockapp.data
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -27,4 +27,7 @@ interface AlarmDao {
 
     @Query("DELETE FROM alarms")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM alarms WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: Set<Long>)
 }

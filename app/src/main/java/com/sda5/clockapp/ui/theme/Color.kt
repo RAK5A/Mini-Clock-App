@@ -37,3 +37,9 @@ val DarkWarning = Color(0xFFFBBF24) // Soft, glowing amber for dark surfaces
 val DarkOnWarning = Color(0xFF1B1B1F)
 val DarkWarningContainer = Color(0xFF452700) // Deep warm background for dark mode
 val DarkOnWarningContainer = Color(0xFFFDE68A)
+
+//val DarkBackground = Color(0xFF0B0F19)
+//val DarkSurface = Color(0xFF161F33)
+//val DarkOnSurfaceVariant = Color(0xFF94A3B8)
+//val CyanAccent = Color(0xFF38BDF8)
+val DarkOnBackground = Color(0xFFF8FAFC)
